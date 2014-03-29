@@ -1,0 +1,8 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+  <addon id="repo.lunatixz" name="Lunatixz Repo" version="1.0.0" provider-name="Lunatixz">
+  <extension point="repo.lunatixz" name="Official PseudoTV Live Repository">
+    <info compressed="true">https://raw.github.com/Lunatixz/script.pseudotv.live/master/addons.xml</info>
+    <checksum>https://raw.github.com/Lunatixz/script.pseudotv.live/master/addons.xml.md5</checksum>
+    <datadir zip="true">https://raw.github.com/Lunatixz/script.pseudotv.live/master/</datadir>
+  </extension>
+  </addon>
