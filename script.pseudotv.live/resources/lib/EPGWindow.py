@@ -267,13 +267,14 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     self.removeControl(cntrl)
                 except:
                     pass
-        try:
+        try: #??
             self.addControls(myadds)
             self.toRemove = []
             self.log('setChannelButtons return')
         except:
             xbmc.log('self.addControls(myadds) in use')
             pass
+
 
 
     # round the given time down to the nearest half hour
@@ -326,44 +327,44 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                     
                     #Live TV pull date from the playlist entry
                     if chtype == 8:
-                       playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
-                       #episodetitle is actually the start time of each show that the playlist gets from channellist.py
-                       tmpDate = self.MyOverlayWindow.channels[curchannel - 1].getItemtimestamp(playlistpos)
-                       self.logDebug("setButtons.setbuttonnowtime2 " + str(tmpDate))
-                       t = time.strptime(tmpDate, '%Y-%m-%d %H:%M:%S')
-                       epochBeginDate = time.mktime(t)
-                       #beginDate = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
-                       #videotime = (nowDate - beginDate).seconds
-                       videotime = time.time() - epochBeginDate
-                       reftime = time.time()
+                        playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
+                        #episodetitle is actually the start time of each show that the playlist gets from channellist.py
+                        tmpDate = self.MyOverlayWindow.channels[curchannel - 1].getItemtimestamp(playlistpos)
+                        self.logDebug("setButtons.setbuttonnowtime2 " + str(tmpDate))
+                        t = time.strptime(tmpDate, '%Y-%m-%d %H:%M:%S')
+                        epochBeginDate = time.mktime(t)
+                        #beginDate = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+                        #videotime = (nowDate - beginDate).seconds
+                        videotime = time.time() - epochBeginDate
+                        reftime = time.time()
                     else:
-                       playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
-                       videotime = xbmc.Player().getTime()
-                       reftime = time.time()
+                        playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
+                        videotime = xbmc.Player().getTime()
+                        reftime = time.time()
                    
                 else:
                     #Live TV pull date from the playlist entry
                     if chtype == 8:
-                       playlistpos = self.MyOverlayWindow.channels[curchannel - 1].playlistPosition
-                       #playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
-                       #episodetitle is actually the start time of each show that the playlist gets from channellist.py
-                       tmpDate = self.MyOverlayWindow.channels[curchannel - 1].getItemtimestamp(playlistpos)
-                       self.logDebug("setButtons.setbuttonnowtime2 " + str(tmpDate))
-                       t = time.strptime(tmpDate, '%Y-%m-%d %H:%M:%S')
-                       epochBeginDate = time.mktime(t)
-                       #beginDate = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
-                       #videotime = (nowDate - beginDate).seconds
-                       #loop to ensure we get the current show in the playlist
-                       while epochBeginDate + self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) <  time.time():
+                        playlistpos = self.MyOverlayWindow.channels[curchannel - 1].playlistPosition
+                        #playlistpos = int(xbmc.PlayList(xbmc.PLAYLIST_VIDEO).getposition())
+                        #episodetitle is actually the start time of each show that the playlist gets from channellist.py
+                        tmpDate = self.MyOverlayWindow.channels[curchannel - 1].getItemtimestamp(playlistpos)
+                        self.logDebug("setButtons.setbuttonnowtime2 " + str(tmpDate))
+                        t = time.strptime(tmpDate, '%Y-%m-%d %H:%M:%S')
+                        epochBeginDate = time.mktime(t)
+                        #beginDate = datetime.datetime(t.tm_year, t.tm_mon, t.tm_mday, t.tm_hour, t.tm_min, t.tm_sec)
+                        #videotime = (nowDate - beginDate).seconds
+                        #loop to ensure we get the current show in the playlist
+                        while epochBeginDate + self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos) <  time.time():
                             epochBeginDate += self.MyOverlayWindow.channels[curchannel - 1].getItemDuration(playlistpos)
                             playlistpos = self.MyOverlayWindow.channels[curchannel - 1].fixPlaylistIndex(playlistpos + 1)
-                       videotime = time.time() - epochBeginDate
-                       reftime = time.time()
+                        videotime = time.time() - epochBeginDate
+                        reftime = time.time()
                        
                     else:
-                       playlistpos = self.MyOverlayWindow.channels[curchannel - 1].playlistPosition #everyotherchannel epg
-                       videotime = self.MyOverlayWindow.channels[curchannel - 1].showTimeOffset
-                       reftime = self.MyOverlayWindow.channels[curchannel - 1].lastAccessTime
+                        playlistpos = self.MyOverlayWindow.channels[curchannel - 1].playlistPosition #everyotherchannel epg
+                        videotime = self.MyOverlayWindow.channels[curchannel - 1].showTimeOffset
+                        reftime = self.MyOverlayWindow.channels[curchannel - 1].lastAccessTime
 
                     self.log('videotime  & reftime  + starttime + channel === ' + str(videotime) + ', ' + str(reftime) + ', ' + str(starttime) + ', ' + str(curchannel))
 
@@ -1092,8 +1093,7 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 self.getControl(508).setImage(MEDIA_LOC + 'EPG.Extras.508.png')
                 self.getControl(510).setImage(MEDIA_LOC + 'EPG.Extras.510.png')  
 
-        ItemTitle = (self.MyOverlayWindow.channels[newchan - 1].getItemTitle(plpos)).replace("*NEW*", "")
-        self.getControl(500).setLabel(ItemTitle)
+        self.getControl(500).setLabel((self.MyOverlayWindow.channels[newchan - 1].getItemTitle(plpos)).replace("*NEW*", ""))
         self.getControl(501).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemEpisodeTitle(plpos))
         self.getControl(502).setLabel(self.MyOverlayWindow.channels[newchan - 1].getItemDescription(plpos))
         
@@ -1116,7 +1116,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
         starttime = self.shownTime + (left / (basew / 5400.0))
         chnoffset = self.focusRow - 2
         newchan = self.centerChannel
-
         nowDate = datetime.datetime.now()
         
         while chnoffset != 0:
@@ -1128,7 +1127,6 @@ class EPGWindow(xbmcgui.WindowXMLDialog):
                 chnoffset += 1
 
         plpos = self.determinePlaylistPosAtTime(starttime, newchan)
-
         chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(newchan) + '_type'))
         
         if plpos == -1:

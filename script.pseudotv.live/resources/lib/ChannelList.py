@@ -1718,7 +1718,11 @@ class ChannelList:
                     except Exception,e:
                         self.log("Json Duration Failed, Trying Runtime")
                         dur = 0
-
+                        
+                    # If duration doesn't exist, try to figure it out
+                    if dur == 0:
+                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
+                    
                     # As a last resort (since it's not as accurate), use runtime
                     if dur == 0:
                         duration = re.search('"runtime" *: *([0-9]*?),', f)
@@ -1728,10 +1732,6 @@ class ChannelList:
                         except Exception,e:
                             self.log("Json Runtime Failed, defaulting to 0")
                             dur = 0
-
-                    # If duration doesn't exist, try to figure it out
-                    if dur == 0:
-                        dur = self.videoParser.getVideoLength(uni(match.group(1)).replace("\\\\", "\\"))
                         
                     # Remove any file types that we don't want (ex. IceLibrary, ie. Strms)
                     if self.incIceLibrary == False:
@@ -1938,22 +1938,22 @@ class ChannelList:
         seasoneplist = []
         showcount = 0  
         elements_parsed = 0
-        xmltv = setting3
+        xmltv = setting3.upper()
         title = ''
         description = ''
         subtitle = ''    
                         
         if self.background == False:
-            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV")
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV - " + str(xmltv) + ", " + str(setting1), "")
             if REAL_SETTINGS.getSetting('EnhancedLiveTV') == 'true' and EnhancedLiveTV == True:
-                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV & Enhancing Guide Data")
+                self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV - " + str(xmltv) + ", " + str(setting1), "Enhancing Guide Data")
 
         if setting3 == 'ustvnow':
             EnhancedLiveTV = False
             f = urllib2.urlopen(self.xmlTvFile)
 
         elif setting3 != '':
-            f = FileAccess.open(self.xmlTvFile, "rb")
+            f = FileAccess.open(self.xmlTvFile, "r")
 
         context = ET.iterparse(f, events=("start", "end")) 
         event, root = context.next()
@@ -2061,6 +2061,10 @@ class ChannelList:
                         if (((now > startDate and now < stopDate) or (now < startDate)) and (ignore == False)):
                             #Enable Enhanced Parsing
                             if not movie and REAL_SETTINGS.getSetting('EnhancedLiveTV') == 'true' and EnhancedLiveTV == True:
+                                
+                                if self.background == False:
+                                    self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV - " + str(xmltv) + ", " + str(setting1), "Enhancing Guide Data - TVDB")
+
                                 type = 'tvshow'
                                 #Decipher the TVDB ID by using the Zap2it ID in dd_progid
                                 episodeNumList = elem.findall("episode-num")
@@ -2143,6 +2147,10 @@ class ChannelList:
                                     sbManaged = self.sbManaged(tvdbid)
 
                             elif movie and REAL_SETTINGS.getSetting('EnhancedLiveTV') == 'true' and EnhancedLiveTV == True:
+                                
+                                if self.background == False:
+                                    self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing LiveTV - " + str(xmltv) + ", " + str(setting1), "Enhancing Guide Data - TMDB")
+                                
                                 type = 'movie'
                                 movieYear = elem.findtext('date')
                                 movieTitle = title
@@ -2272,54 +2280,33 @@ class ChannelList:
         showList = []
         seasoneplist = []
         showcount = 0
+        dur = 0
+        url = ''
+        title = ''
+        description = ''
             
         if self.background == False:
             self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Building InternetTV")
-   
-        try:
-            self.ninstance = xbmc.translatePath(os.path.join(Globals.SETTINGS_LOC, 'settings.xml'))
-        except Exception,e:
-            self.log("buildInternetTVFileList, Could not find settings.xml. Run configuration first...")
-            return   
+
+        url = unquote(setting2)
+        title = setting3
+        description = setting4
+        if not description:
+            description = title
+        istvshow = True
+
+        if setting1 >= 1:
+            try:
+                dur = setting1
+                self.log("buildInternetTVFileList, CHANNEL: " + str(self.settingChannel) + ", " + title + "  DUR: " + str(dur))
+            except Exception,e:
+                dur = 5400  #90 minute default
+                self.log("buildInternetTVFileList, CHANNEL: " + str(self.settingChannel) + " - Error calculating show duration (defaulted to 90 min)")
+                pass
             
-        f = open(self.ninstance, "rb")
-        context = ET.iterparse(f, events=("start", "end"))
-
-        event, root = context.next()
-     
-        inSet = False
-        for event, elem in context:
-            if self.threadPause() == False:
-                del showList[:]
-                break
-                
-            if event == "end":
-                if setting1 >= 1:
-                    inSet = True
-                    title = setting3
-                    url = unquote(setting2)
-                    description = setting4
-                    if not description:
-                        description = title
-                    istvshow = True
-
-                    if setting1 >= 1:
-                        try:
-                            dur = setting1
-                            self.log("buildInternetTVFileList, CHANNEL: " + str(self.settingChannel) + ", " + title + "  DUR: " + str(dur))
-                        except Exception,e:
-                            dur = 5400  #90 minute default
-                            self.log("buildInternetTVFileList, CHANNEL: " + str(self.settingChannel) + " - Error calculating show duration (defaulted to 90 min)")
-                            raise
-
-                    tmpstr = str(dur) + ',' + title + "//" + "InternetTV" + "//" + description + "//" 'InternetTV' + "////" + 'LiveID|' + '\n' + url
-                    tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
-
-                    showList.append(tmpstr)
-
-                showcount += 1
-                    
-            root.clear()
+        tmpstr = str(dur) + ',' + title + "//" + "InternetTV" + "//" + description + "//" 'InternetTV' + "////" + 'LiveID|' + '\n' + url
+        tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
+        showList.append(tmpstr)
 
         return showList
 
@@ -2340,14 +2327,27 @@ class ChannelList:
             limit = int(setting3)
             self.log("createYoutubeFilelist, Overriding Parse-limit = " + str(limit))
             
-        # If Setting2 = User playlist pagination disabled, else loop through pagination of 25 entries per page and stop at limit.
-        if setting2 == '2' or setting2 == '9': 
-            stop = 2
-        else:
+        if setting2 == '1':
             stop = (limit / 25)
-
+            MSG = 'User Uploads'
+        elif setting2 == '2':
+            stop = 2
+            MSG = 'User Playlist'
+        elif setting2 == '3':
+            stop = (limit / 25)
+            MSG = 'New Subscription'
+        elif setting2 == '4':
+            stop = (limit / 25)
+            MSG = 'User Favorites'
+        elif setting2 == '5':
+            stop = (limit / 25)
+            MSG = 'Search Query'
+        elif setting2 == '9': 
+            stop = 2 # If Setting2 = User playlist pagination disabled, else loop through pagination of 25 entries per page and stop at limit.
+            MSG = 'Raw gdata'
+            
         if self.background == False:
-            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing Youtube")
+            self.updateDialog.update(self.updateDialogProgress, "Updating channel " + str(self.settingChannel), "Parsing Youtube - " + str(MSG))
         
         startIndex = 1
         for x in range(stop):    
@@ -2936,21 +2936,24 @@ class ChannelList:
             except urllib2.URLError as e:
                 if "Errno 10054" in e:
                     raise
-
-                    
+ 
         elif setting3 != '':
             self.xmlTvFile = xbmc.translatePath(os.path.join(REAL_SETTINGS.getSetting('xmltvLOC'), str(setting3) +'.xml'))
             self.log("xmltv_ok, testing " + str(self.xmlTvFile))
             try:
                 FileAccess.exists(self.xmlTvFile)
                 self.log("INFO: XMLTV File Found...")
-                f = FileAccess.open(self.xmlTvFile, "rb")
-                linesLST = f.readlines()
-                for i in range(len(set(linesLST))):
-                    lines = linesLST[i]
-                    if setting1 in lines:
-                        self.log("INFO: XMLTV ZAPIT Data Found...")
-                        self.xmltvValid = True
+                # f = FileAccess.open(self.xmlTvFile, "r")
+                # context = ET.iterparse(f, events=("start", "end")) 
+                # event, root = context.next()
+                # for event, elem in context:
+                    # if event == "end":
+                        # if elem.tag == "programme":
+                            # channel = elem.get("channel")
+                            # if setting1 in channel:
+                                # self.log("INFO: XMLTV ZAPIT Data Found...")
+                self.xmltvValid = True
+                # root.clear()                
             except IOError as e:
                 self.log("ERROR: Problem accessing " + str(setting3) +".xml, ERROR: " + str(e))
 
@@ -3740,7 +3743,7 @@ class ChannelList:
     def copyanything(self, src, dst):
         try:
             shutil.copytree(src, dst)
-        except OSError as exc: # python >2.5
+        except OSError as exc:
             if exc.errno == errno.ENOTDIR:
                 shutil.copy(src, dst)
             else: raise
@@ -3819,54 +3822,32 @@ class ChannelList:
         except Exception,e:
             pass
         return imdbid
- 
-    
-    def BuildPluginFileList(self, setting1, setting2, setting3, setting4, channel):
-        self.log('BuildPluginFileList')
-        inSet = False
-        showList = []
-        seasoneplist = []
-        showcount = 0
-        filetype = ''
-        file = ''
-        label = ''
-        title = ''
-        genre = ''
-        runtime = 0
-        description = ''
+        
+        
+    def FillPluginInfo(self, path):
+        print 'FillPluginInfo'
+        json_query = uni('{"jsonrpc":"2.0","method":"Files.GetDirectory","params":{"directory":"%s","properties":["genre","runtime","description"]},"id":1}' % ( str(path),))
+        json_folder_detail = self.sendJSON(json_query)
+        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
         Detail = ''
         DetailLST = []
-        dur = 0
-
-        Directs = (setting2.split('/')) # split folders
-        Directs = ([x for x in Directs if x != '']) # remove empty elements
-        plugin = Directs[1] # element 1 in split is plugin://plugin.type.name
-        Directs = Directs[2:] # slice first two unwanted elements.
-        print plugin, Directs, len(Directs) 
-        
-        if self.background == False:
-            self.updateDialog.update(self.updateDialogProgress, "Parsing: " + str(plugin), "", "")
-
-        json_query = uni('{"jsonrpc":"2.0","method":"Files.GetDirectory","params":{"directory":"%s","properties":["genre","runtime","description"]},"id":1}' % ( str(setting2),))
-        json_folder_detail = self.sendJSON_NEW(json_query)
-        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
 
         for f in (file_detail): #run through each result in json return
             filetype = re.search('"filetype" *: *"(.*?)"', f)
-            file = re.search('"file" *: *"(.*?)"', f)
             label = re.search('"label" *: *"(.*?)"', f)
             genre = re.search('"genre" *: *"(.*?)"', f)
             runtime = re.search('"runtime" *: *([0-9]*?),', f)
             description = re.search('"description" *: *"(.*?)"', f)
-            
+            file = re.search('"file" *: *"(.*?)"', f)
+
             if filetype and file and label: #if core variables have info proceed
                 filetype = filetype.group(1)
+                title = (label.group(1)).replace(',',' ')
                 file = file.group(1)
-                title = label.group(1)
                 try:
                     genre = genre.group(1)
                 except:
-                    genre = ''
+                    genre = 'PluginTV'
                     pass
                 try:
                     runtime = runtime.group(1)
@@ -3874,139 +3855,111 @@ class ChannelList:
                     runtime = 0
                     pass
                 try:
-                    description = description.group(1)
+                    description = (description.group(1)).replace(',',' ')
                 except:
-                    description = ''
+                    description = 'None'
                     pass
-                Detail = str(filetype) + ',' + str(file) + ',' + str(title) + ',' + str(genre) + ',' + str(runtime) + ',' + str(description)
+
+                Detail = str((filetype) + ',' + str(title) + ',' + str(genre) + ',' + str(runtime) + ',' + str(description) + ',' + str(file)).replace(',,',',')
                 DetailLST.append(Detail)
-                
-        Found_Directory = True
-        while Found_Directory:
-        
-            if len(Directs) == 0:
-                Found_Directory = True
+
+        return DetailLST
+    
+    
+    def BuildPluginFileList(self, setting1, setting2, setting3, setting4, channel):
+        print 'BuildPluginFileList'
+        showList = []
+        showcount = 0
+        recursive = []
+        reccount = 0
+        recNum = 0
+        filter = []
+        filtercount = 0
+        Directs = (setting2.split('/')) # split folders
+        Directs = ([x for x in Directs if x != '']) # remove empty elements
+        plugins = Directs[1] # element 1 in split is plugin://plugin.type.name
+        Directs = Directs[2:] # slice first two unwanted elements.
+        plugin = 'plugin://' + plugins
+
+        try:
+            recursive = setting1.split(',')
+            recursive = ([x for x in recursive if x != '']) # remove empty elements
+            reccount = len(recursive)
+            print 'rrecursive' + recursive, reccount
+        except:
+            pass
+
+        try:
+            filter = setting3.split(',')
+            filter = ([x for x in filter if x != '']) # remove empty elements
+            filtercount = len(filter)
+            print 'filter' + filter, filtercount
+        except:
+            pass
+
+
+        Match = True
+        while Match:
+
+            DetailLST = self.FillPluginInfo(plugin)
+
+            if len(Directs) >= 1:
+                Match = True
             else:
-                Found_Directory = False
-            
-            print 'Found_Directory = ' + str(Found_Directory)
-            print len(DetailLST)
-            
+                Match = False
+
+            print Match, plugin, Directs, len(Directs)
+
             for i in range(len(DetailLST)):
-                print 'step 1'
                 Detail = str(DetailLST[i])
-                
                 filetype = Detail.split(',')[0]
-                file = Detail.split(',')[1]
-                title = Detail.split(',')[2]
-                genre = Detail.split(',')[3]
-                runtime = Detail.split(',')[4]
-                description = Detail.split(',')[5]
-                
-                if len(Directs) >= 1 and filetype == 'directory':
-                    print 'directory'
-                    print str(Directs[0]) + ' ?match? ' + str(title) + ', ' + str(len(Directs))
-                    
-                    if Directs[0] in title:
-                        print 'MATCH!'
-                        Directs.pop(0) #remove old directory, search next element
-                        json_query = uni('{"jsonrpc":"2.0","method":"Files.GetDirectory","params":{"directory":"%s","properties":["genre","runtime","description"]},"id":1}' % ( str(file),))
-                        json_folder_detail = self.sendJSON_NEW(json_query)
-                        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
-                        DetailLST = []
-                        
-                        for f in (file_detail): #run through each entry in json return
-                            print 'step 2'
-                            
-                            filetype = re.search('"filetype" *: *"(.*?)"', f)
-                            file = re.search('"file" *: *"(.*?)"', f)
-                            label = re.search('"label" *: *"(.*?)"', f)
-                            genre = re.search('"genre" *: *"(.*?)"', f)
-                            runtime = re.search('"runtime" *: *([0-9]*?),', f)
-                            description = re.search('"description" *: *"(.*?)"', f)
-                            
-                            if filetype and file and label:
-                                print 'step 3'
-                                filetype = filetype.group(1)
-                                file = file.group(1)
-                                title = label.group(1)
-                                try:
-                                    genre = genre.group(1)
-                                except:
-                                    genre = ''
-                                    pass
-                                try:
-                                    runtime = runtime.group(1)
-                                except:
-                                    runtime = 0
-                                    pass
-                                try:
-                                    description = description.group(1)
-                                except:
-                                    description = ''
-                                    pass
-                                Detail = str(filetype) + ',' + str(file) + ',' + str(title) + ',' + str(genre) + ',' + str(runtime) + ',' + str(description)
-                                DetailLST.append(Detail)
+                title = Detail.split(',')[1]
+                genre = Detail.split(',')[2]
+                dur = Detail.split(',')[3]
+                description = Detail.split(',')[4]
+                file = Detail.split(',')[5]
 
-            if len(Directs) == 0:  
-                for i in range(len(DetailLST)):
-                    print 'step 1'
-                    Detail = str(DetailLST[i])
-                
-                    filetype = Detail.split(',')[0]
-                    file = Detail.split(',')[1]
-                    title = Detail.split(',')[2]
-                    genre = Detail.split(',')[3]
-                    runtime = Detail.split(',')[4]
-                    description = Detail.split(',')[5]
-                    
+                if len(Directs) >= 1:
+                    if filetype == 'directory':
+                        print 'directory'
+                        print Directs[0] + ' ?Match? ' + title
+
+                        if Directs[0] in title:
+                            print 'MATCH!'
+                            Directs.pop(0) #remove old directory, search next element
+                            plugin = str(file)
+
+                elif len(Directs) == 0:
                     if filetype == 'file':
-                        inSet = True
-                        print 'file'     
-                        
-                        try:
-                            filter = setting3.split(',')
-                        except:
-                            pass
-                            
+                        print 'file'
                         title = title.replace('*', '')
-                        
-                        if int(setting1) == 0:
-                            if runtime >= 0:
-                                dur = 1800
-                            else:
-                                dur = runtime
-                        else:
-                            dur = int(setting1)
-
-                        if description == '' or description == None:
-                            description = (str(setting2)).replace('plugin://','')
-                        
-                        if genre == '' or genre == None:
-                            genre = 'PluginTV'
-                            
                         if title not in filter:
-                            print 'match'
+                            print 'Filtered'
                             
+                            if genre == '' or genre == None:
+                                genre = 'PluginTV'
+                                
+                            if dur == '0' or dur == '' or dur == None:
+                                dur = 1800
+                                
+                            if description == 'None' or description == None:
+                                description = plugins
+                                
                             tmpstr = str(dur) + ',' + str(title) + "//" + "PluginTV" + "//" + str(description) + "//" + str(genre) + "////" + 'LiveID|' + '\n' + file
-                            tmpstr = tmpstr.replace("\\n", " ").replace("\\r", " ").replace("\\\"", "\"")
                             print tmpstr
                             showList.append(tmpstr)
-                            
-                    showcount += 1
-                    print 'showcount = ' + str(showcount)
-                    
-                    if self.background == False:
-                        if showcount == 1:
-                            self.updateDialog.update(self.updateDialogProgress, "Parsing: " + str(plugin), "adding videos", "added " + str(showcount) + " entry")
-                        else:
-                            self.updateDialog.update(self.updateDialogProgress, "Parsing:" + str(plugin), "adding videos", "added " + str(showcount) + " entries")
-                    
-                if showcount == len(DetailLST):
-                    break
-                
-                if inSet == False:
-                    xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoTV Live", "Plugin not compatibility", 1000, THUMB) )
+                            showcount += 1
 
+            if len(Directs) == 0 and len(recursive) >= 1:
+                try:
+                    print 'recursive directory'
+                    Directs.append(recursive[0])
+                    recursive.pop(0) #remove old directory, search next element
+                    Match = True
+                    print Match, Directs, len(Directs)
+                    recNum = recNum + 1
+                except:
+                    pass
+                    
+        print 'showcount = ' + str(showcount)
         return showList
-        

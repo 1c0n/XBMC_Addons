@@ -239,7 +239,7 @@ class BaseRule:
             values.append(int(self.optionValues[optionindex][1]))
             values.append(int(self.optionValues[optionindex][3]))
             values.append(int(self.optionValues[optionindex][4]))
-        except Exception,e:
+        except:
             self.optionValues[optionindex] = "00:00"
             return
 
@@ -341,7 +341,7 @@ class BaseRule:
                 self.optionValues[optionindex] = str(val)
 
             return
-        except Exception,e:
+        except:
             pass
 
         self.optionValues[optionindex] = str(default)
@@ -565,7 +565,7 @@ class ScheduleChannelRule(BaseRule):
 
         try:
             tmpdate = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], "%d/%m/%Y %H:%M"))
-        except Exception,e:
+        except:
             pass
 
         if tmpdate > 0:
@@ -593,7 +593,7 @@ class ScheduleChannelRule(BaseRule):
 #                        self.optionValues[5] = thedate.strftime(xbmc.getRegion("dateshort"))
                     self.optionValues[5] = thedate.strftime("%d/%m/%Y")
                     self.saveOptions(channeldata)
-            except Exception,e:
+            except:
                 pass
 
 
@@ -604,7 +604,7 @@ class ScheduleChannelRule(BaseRule):
 
         try:
             self.startIndex = int(ADDON_SETTINGS.getSetting('Channel_' + str(curchan) + '_lastscheduled'))
-        except Exception,e:
+        except:
             self.startIndex = 0
 
         if self.appended == True:
@@ -671,7 +671,7 @@ class ScheduleChannelRule(BaseRule):
             # This is how it should be, but there is a bug in XBMC preventing this
 #            starttime = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], xbmc.getRegion("dateshort") + " %H:%M"))
             starttime = time.mktime(time.strptime(self.optionValues[5] + " " + self.optionValues[2], "%d/%m/%Y %H:%M"))
-        except Exception,e:
+        except:
             self.log("Invalid date or time")
             self.nextScheduledTime = 0
             return
@@ -699,7 +699,7 @@ class ScheduleChannelRule(BaseRule):
 
             if tmp.find('U') > -1:
                 daysofweek |= 64
-        except Exception,e:
+        except:
             self.log("Invalid date or time")
             self.nextScheduledTime = 0
             return
@@ -746,7 +746,7 @@ class ScheduleChannelRule(BaseRule):
             chan = int(self.optionValues[0])
             epcount = int(self.optionValues[3])
             startingep = int(self.optionValues[4]) - 1
-        except Exception,e:
+        except:
             pass
 
         if startingep < 0:
@@ -913,7 +913,7 @@ class OnlyWatchedRule(BaseRule):
 
             try:
                 pc = int(playcount.group(1))
-            except Exception,e:
+            except:
                 pc = 0
 
             if pc == 0:
@@ -999,7 +999,7 @@ class InterleaveChannel(BaseRule):
                 startingep = int(self.optionValues[3])
                 numbereps = int(self.optionValues[4])
                 startfrom = int(self.optionValues[5])
-            except Exception,e:
+            except:
                 self.log("Except when reading params")
 
             if chan > channelList.maxChannels or chan < 1 or minint < 1 or maxint < 1 or startingep < 1 or numbereps < 1:
@@ -1181,7 +1181,7 @@ class OnlyUnWatchedRule(BaseRule):
 
             try:
                 pc = int(playcount.group(1))
-            except Exception,e:
+            except:
                 pc = 0
 
             if pc > 0:
@@ -1231,7 +1231,7 @@ class PlayShowInOrder(BaseRule):
                 seasonval = int(season.group(1))
                 epval = int(episode.group(1))
                 self.showInfo.append([showtitle.group(1), match.group(1).replace("\\\\", "\\"), seasonval, epval])
-            except Exception,e:
+            except:
                 pass
 
 
@@ -1354,7 +1354,7 @@ class SetResetTime(BaseRule):
 
             try:
                 numdays = int(self.optionValues[0])
-            except Exception,e:
+            except:
                 pass
 
             if numdays <= 0:
@@ -1366,7 +1366,7 @@ class SetResetTime(BaseRule):
 
             try:
                 nextreset = int(ADDON_SETTINGS.getSetting('Channel_' + str(curchan) + '_SetResetTime'))
-            except Exception,e:
+            except:
                 pass
 
             if rightnow >= nextreset:
@@ -1573,7 +1573,7 @@ class EvenShowsRule(BaseRule):
                                 lastshow = showname
                                 self.log("new show: " + lastshow)
                                 inarow = 0
-            except Exception,e:
+            except:
                 pass
 
         return filelist

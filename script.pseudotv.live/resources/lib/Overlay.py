@@ -530,7 +530,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                     timedif -= self.channels[self.currentChannel - 1].getCurrentDuration() - self.channels[self.currentChannel - 1].showTimeOffset
                     self.channels[self.currentChannel - 1].addShowPosition(1)
                     self.channels[self.currentChannel - 1].setShowTime(0)
-                    self.log('while loop')
 
         # First, check to see if the video is a...
         if self.channels[self.currentChannel - 1].getItemFilename(self.channels[self.currentChannel - 1].playlistPosition)[-4:].lower() == 'strm':# or chtype >= 8:
@@ -728,13 +727,11 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         
         try:
             type1 = str(self.getControl(507).getLabel())
-            self.log('setShowInfo.type1 = ' + str(type1))  
         except:
             pass
         
         try:
             type2 = str(self.getControl(509).getLabel())
-            self.log('setShowInfo.type2 = ' + str(type2))  
         except:
             pass
         
@@ -1002,9 +999,9 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.infoOffset = 0
             self.showInfo(InfoTimer)
 
-        if self.showChannelBug == True:      
+        if self.showChannelBug == True:  
             chtype = (ADDON_SETTINGS.getSetting('Channel_' + str(self.currentChannel - 1) + '_type'))
-            
+                
             if chtype == '8':
                 #disable channel bug for LiveTV
                 self.getControl(103).setImage('')
@@ -1107,7 +1104,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
         action = act.getId()
         self.log('onAction ' + str(action))
         chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(self.currentChannel) + '_type'))
-        
+
         if self.Player.stopped:
             return
 
@@ -1306,6 +1303,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             return
 
         if self.Player.isPlaying():
+            print 'isplaying'
             if self.notificationLastChannel != self.currentChannel:
                 docheck = True
             else:
@@ -1316,35 +1314,46 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         docheck = True
 
             if docheck == True:
+                print 'docheck'
                 self.notificationLastChannel = self.currentChannel
                 self.notificationLastShow = xbmc.PlayList(xbmc.PLAYLIST_MUSIC).getposition()
                 self.notificationShowedNotif = False
 
                 if self.hideShortItems:
+                    print 'hideShortItems1'
                     # Don't show any notification if the current show is < 60 seconds
                     if self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) < self.shortItemLength:
+                        print 'hideshorts'
                         self.notificationShowedNotif = True
 
                 timedif = self.channels[self.currentChannel - 1].getItemDuration(self.notificationLastShow) - self.Player.getTime()
-
+                
+                print 'timedif'
+                print str(self.notificationShowedNotif)
+                print str(timedif)
+                print str(NOTIFICATION_TIME_BEFORE_END)
+                print str(NOTIFICATION_DISPLAY_TIME)
+                
                 if self.notificationShowedNotif == False and timedif < NOTIFICATION_TIME_BEFORE_END and timedif > NOTIFICATION_DISPLAY_TIME:
                     nextshow = self.channels[self.currentChannel - 1].fixPlaylistIndex(self.notificationLastShow + 1)
-
+                    print 'nextshow'
+                    
                     if self.hideShortItems:
+                        print 'hideShortItems2'
                         # Find the next show that is >= 60 seconds long
                         while nextshow != self.notificationLastShow:
                             if self.channels[self.currentChannel - 1].getItemDuration(nextshow) >= self.shortItemLength:
                                 break
+
                             nextshow = self.channels[self.currentChannel - 1].fixPlaylistIndex(nextshow + 1)
                     
                     self.log('notification.init')     
-                    mediapath = uni(self.channels[self.currentChannel - 1].getItemFilename(nextshow))         
-                    self.logDebug('notification.mediapath.1 = ' + uni(mediapath))                        
-                    self.logDebug('notification.MEDIA_LOC = ' + uni(MEDIA_LOC))     
-                    chtype = int(ADDON_SETTINGS.getSetting('Channel_' + str(self.currentChannel - 1) + '_type'))
+                    mediapath = ascii(self.channels[self.currentChannel - 1].getItemFilename(nextshow))
+                    print mediapath
+                    chtype = (ADDON_SETTINGS.getSetting('Channel_' + str(self.currentChannel - 1) + '_type'))
                     title = 'Coming Up Next'   
                     THUMB = (DEFAULT_IMAGES_LOC + 'icon.png')
-                    
+                    print 'hello'
                     
                     if REAL_SETTINGS.getSetting("ColorOverlay") == "true":
                         ChannelLogo = (self.channelLogos + ascii(self.channels[self.currentChannel - 1].name) + '_c.png')
@@ -1352,7 +1361,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         ChannelLogo = (self.channelLogos + ascii(self.channels[self.currentChannel - 1].name) + '.png')
 
                     
-                    if chtype <= 7:
+                    if chtype <= '7':
                         type = {}
                         type['0'] = 'poster'
                         type['1'] = 'fanart' 
@@ -1361,7 +1370,6 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         type['4'] = 'clearart'             
                         
                         type = type[REAL_SETTINGS.getSetting('ComingUpArtwork')]
-                        self.logDebug('notification.type = ' + str(type))    
                         jpg = ['banner', 'fanart', 'folder', 'landscape', 'poster']
                         png = ['character', 'clearart', 'logo']    
                         
@@ -1369,7 +1377,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                             type1EXT = (type + '.jpg')
                         else:
                             type1EXT = (type + '.png')
-                        self.logDebug('notification.type.ext = ' + str(type1EXT))  
+                        self.log('notification.type.ext = ' + str(type1EXT))  
                         
                         mediapathSeason, filename = os.path.split(mediapath)                        
                         mediapathSeries = os.path.dirname(mediapathSeason)
@@ -1382,22 +1390,20 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
                         elif FileAccess.exists(mediapathSeason1):
                             THUMB = mediapathSeason1
                         elif FileAccess.exists(ChannelLogo):
-                            THUMB = ChannelLogo
-                            
+                            THUMB = ChannelLogo    
 
-                    elif chtype >= 8:
+                    elif chtype >= '8':
                         if FileAccess.exists(ChannelLogo):
                             THUMB = ChannelLogo
                         elif mediapathSeason[0:6] == 'plugin':
-                            id = mediapathSeason
-                            id = id.replace("/?path=/root", "")
+                            id = mediapathSeason.replace("/?path=/root", "")
                             id = id.split('plugin://', 1)[-1]
                             id = 'special://home/addons/'+ id + '/icon.png'
                             self.log("notification.plugin.id = " + id)
                             THUMB = id      
                             
                     xbmc.executebuiltin('XBMC.Notification(%s, %s, %s, %s)' % (title, self.channels[self.currentChannel - 1].getItemTitle(nextshow).replace(',', ''), str(NOTIFICATION_DISPLAY_TIME * 1000), THUMB))
-                    self.logDebug("THUMB = " + str(THUMB))
+                    self.log("notification.THUMB = " + ascii(THUMB))
                     self.notificationShowedNotif = True
 
         self.startNotificationTimer()
@@ -1415,7 +1421,7 @@ class TVOverlay(xbmcgui.WindowXMLDialog):
             self.notPlayingCount += 1
             self.log("Adding to notPlayingCount")
         
-        if self.channels[self.currentChannel - 1].getCurrentFilename()[-4:].lower() != 'strm' or chtype <= 7:
+        if self.channels[self.currentChannel - 1].getCurrentFilename()[-4:].lower() != 'strm' or chtype <= '7':
             if self.notPlayingCount >= 3:
                 self.log("exiting after three peat error")
                 json_query = '{"jsonrpc":"2.0","method":"Input.Up","params":{},"id":1}'
