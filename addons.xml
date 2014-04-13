@@ -1,3 +1,54 @@
-<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <addons>
+<addon id="plugin.video.ustvnow" version="9.9.9" name="ustvnow" provider-name="Lunatixz">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+    </requires>
+    <extension point="xbmc.python.pluginsource" library="default.py">
+        <provides>video</provides>
+    </extension>
+    <extension point="xbmc.addon.metadata">
+        <summary>Plays live streams and recordings from ustvnow.com</summary>
+        <description>Live streaming US TV. You MUST log in to view streams (see addon settings). You can also play any recordings you have made on ustvnow.com</description>
+        <platform>all</platform>
+    </extension>
+</addon>
+
+  <addon id="repo.lunatixz" name="Lunatixz Repo" version="1.0.0" provider-name="Lunatixz">
+  <extension point="repo.lunatixz" name="Official PseudoTV Live Repository">
+    <info compressed="true">https://raw.github.com/Lunatixz/script.pseudotv.live/master/addons.xml</info>
+    <checksum>https://raw.github.com/Lunatixz/script.pseudotv.live/master/addons.xml.md5</checksum>
+    <datadir zip="true">https://raw.github.com/Lunatixz/script.pseudotv.live/master/</datadir>
+  </extension>
+  </addon>
+
+<addon
+    id="script.pseudotv.live"
+    version="0.3.7"
+    name="PseudoTV Live"
+    provider-name="Lunatixz">
+    <requires>
+        <import addon="xbmc.python" version="2.1.0"/>
+        <import addon="script.module.requests" version="1.1.0"/>
+        <import addon="script.common.plugin.cache" version="0.9.1"/>
+        <import addon="script.module.beautifulsoup" version="3.2.1"/>
+        <import addon="script.module.simplejson" version="0.9.1"/>
+        <import addon="script.module.feedparser" version="0.9.1"/>
+        <import addon="plugin.video.youtube" optional="true"/>
+        <import addon="script.artwork.downloader" optional="true"/>
+        <import addon="script.module.simple.downloader" optional="true"/>
+        <import addon="plugin.video.ustvnow" optional="true" version="9.9.9"/>
+    </requires>
+    <extension point="xbmc.python.script"
+        defaultresolution="720p"
+        defaultresolutionwide="720p"
+        library="default.py"/>
+    <extension point="xbmc.service" library="service.py" start="startup"/>
+    <extension point="xbmc.addon.metadata">
+        <platform>all</platform>
+        <minversion>35647</minversion>
+        <summary lang="en">Channel surfing for your video library</summary>
+        <description lang="en">PseudoTV acts similar to normal broadcast or cable TV, complete with multiple preset and user-defined channels and an EPG.</description>
+	</extension>
+</addon>
 </addons>

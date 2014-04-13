@@ -1,0 +1,13 @@
+This skin was originally written to be used with the XBMC Bello, however it can also be used with Confluence with a few simple alterations.
+
+
+
+1. In the enclosed 720p folder you will a XML file named "font - CONFLUENCE" rename this file to simply "Font" and replace the "Font" XML file in the 720p folder for skin.confluence
+
+
+
+2.  In the enclosed Media folder you will find a folder called "Fonts" in which you will find two fonts, Opensans-light and Opensans-regular. You must paste these into the "Fonts" folder for skin.confluence
+
+
+
+3.  In the 720p folder replace the files psuedotv.live.epg with the file psuedotv.live.epg - CONFLUNECE. Obviously delete the "- CONFLUENCE" part.  
