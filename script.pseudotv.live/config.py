@@ -1,7 +1,7 @@
-#   Copyright (C) 2011 Jason Anderson
+#   Copyright (C) 2013 Lunatixz
 #
 #
-# This file is part of PseudoTV.
+# This file is part of PseudoTV Live.
 #
 # PseudoTV is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
+# along with PseudoTV Live.  If not, see <http://www.gnu.org/licenses/>.
 
 import xbmc, xbmcgui, xbmcaddon
 import subprocess, os
@@ -147,13 +147,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             ADDON_SETTINGS.setSetting(setting1, self.getControl(182).getLabel())
         elif chantype == 6:
             ADDON_SETTINGS.setSetting(setting1, self.getControl(192).getLabel())
-        elif chantype == 12:
-            ADDON_SETTINGS.setSetting(setting1, self.getControl(992).getLabel())
-
+            
             if self.getControl(194).isSelected():
                 ADDON_SETTINGS.setSetting(setting2, str(MODE_ORDERAIRDATE))
             else:
                 ADDON_SETTINGS.setSetting(setting2, "0")
+                
         elif chantype == 7:
             ADDON_SETTINGS.setSetting(setting1, self.getControl(200).getLabel())
         elif chantype == 9999:
@@ -264,10 +263,6 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.changeListData(self.mixedGenreList, 182, -1)
         elif controlId == 181:      # Mixed Genre channel, right
             self.changeListData(self.mixedGenreList, 182, 1)
-        elif controlId == 990:      # Music Genre channel, left
-            self.changeListData(self.musicGenreList, 992, -1)
-        elif controlId == 991:      # Music Genre channel, right
-            self.changeListData(self.musicGenreList, 992, 1)
         elif controlId == 190:      # TV Show channel, left
             self.changeListData(self.showList, 192, -1)
         elif controlId == 191:      # TV Show channel, right
@@ -437,15 +432,12 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             self.getControl(172).setLabel(self.findItemInList(self.movieGenreList, chansetting1))
         elif chantype == 5:
             self.getControl(182).setLabel(self.findItemInList(self.mixedGenreList, chansetting1))
-        elif chantype == 12:
-            self.getControl(992).setLabel(self.findItemInList(self.musicGenreList, chansetting1))
         elif chantype == 6:
             self.getControl(192).setLabel(self.findItemInList(self.showList, chansetting1))
             self.getControl(194).setSelected(chansetting2 == str(MODE_ORDERAIRDATE))
         elif chantype == 7:
             if (chansetting1.find('/') > -1) or (chansetting1.find('\\') > -1):
                 plname = self.getSmartPlaylistName(chansetting1)
-
                 if len(plname) != 0:
                     chansetting1 = ''
             else:
@@ -541,7 +533,9 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         elif chantype == 14:
             return "Extras"
         elif chantype == 15:
-            return "PluginTV"
+            return "Plugin"
+        elif chantype == 16:
+            return "Playon"
         elif chantype == 9999:
             return "None"
 
@@ -556,7 +550,7 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
         self.dlg.create("PseudoTV Live", "Preparing Configuration")
         self.dlg.update(1)
         chnlst = ChannelList()        
-        self.dlg.update(40)
+        self.dlg.update(50)
         chnlst.fillMusicInfo()       
         self.dlg.update(60)
         chnlst.fillTVInfo()
@@ -639,11 +633,13 @@ class ConfigWindow(xbmcgui.WindowXMLDialog):
             elif chantype == 12:
                 newlabel = channame + " - Music"
             elif chantype == 13:
-                newlabel = channame + " - Last.FM"
+                newlabel = channame + " - Music Videos"
             elif chantype == 14:
                 newlabel = channame + " - Extras"
             elif chantype == 15:
-                newlabel = channame + " - PluginTV"
+                newlabel = channame + " - Plugin"
+            elif chantype == 16:
+                newlabel = channame + " - Playon"
             elif chantype == 7:
                 if chansetting1[-1] == '/' or chansetting1[-1] == '\\':
                     newlabel = os.path.split(chansetting1[:-1])[1]

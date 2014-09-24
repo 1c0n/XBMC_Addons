@@ -1,7 +1,7 @@
-#   Copyright (C) 2013 Lunatixz
+#   Copyright (C) 2011 Lunatixz
 #
 #
-# This file is part of PseudoTV.
+# This file is part of PseudoTV Live.
 #
 # PseudoTV is free software: you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,87 +14,153 @@
 # GNU General Public License for more details.
 #
 # You should have received a copy of the GNU General Public License
-# along with PseudoTV.  If not, see <http://www.gnu.org/licenses/>.
+# along with PseudoTV Live.  If not, see <http://www.gnu.org/licenses/>.
 
-def main():
-    pass
-
-if __name__ == '__main__':
-    main()
- 
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
-import os, sys
-import urllib
+import os, sys, time, fileinput, re
+import urllib, urllib2
 
 from resources.lib.Globals import *
+from resources.lib.FileAccess import FileLock, FileAccess
+from resources.lib.utils import *
 
-xbmc.log('script.pseudotv.live-donordownload: Donor Download Started')
-xbmc.log('script.pseudotv.live-donordownload: Donor Enabled? = ' + str(REAL_SETTINGS.getSetting("Donor_Enabled"))) 
-
-
+try:
+    from Donor import *
+except:
+    pass
+    
+#Globals
 UserPass = REAL_SETTINGS.getSetting('Donor_UP')
 BaseURL = ('http://'+UserPass+'@ptvl.comeze.com/PTVL/')
 
+DonorDownloaded = False
+LogoDownloaded = False
+BumperDownloaded = False
+
+#Donor
 DonorURLPath = (BaseURL + 'Donor.py')
+LinkURLPath = (BaseURL + 'links.py')
+LinkPath = (os.path.join(ADDON_PATH, 'resources', 'lib', 'links.py'))
 DonorPath = (os.path.join(ADDON_PATH, 'resources', 'lib', 'Donor.pyo'))
 DL_DonorPath = (os.path.join(ADDON_PATH, 'resources', 'lib', 'Donor.py'))
 
-xbmc.log('script.pseudotv.live-donordownload: DonorPath = ' + str(DonorPath))
-xbmc.log('script.pseudotv.live-donordownload: DL_DonorPath = ' + str(DL_DonorPath)) 
-DonorDownload = False
-Installed = False
-Error = False
 
-# Find Donor.pyo, Activate/Update
-if xbmcvfs.exists(DonorPath):
-    if dlg.yesno("PseudoTV Live", "Update Donor Features?"):
-        try:
-            os.remove(xbmc.translatePath(DonorPath))
-            DonorDownload = True  
-            xbmc.log('script.pseudotv.live-donordownload: Removed DonorPath')  
-        except Exception,e:
-            xbmc.log(str(e))
-            Error = True
-            xbmc.log('script.pseudotv.live-donordownload: Removed DonorPath Failed!' + str(e))    
-            pass  
-elif xbmcvfs.exists(DL_DonorPath):
-    if dlg.yesno("PseudoTV Live", "Update Donor Features?"):
-        try: 
-            os.remove(xbmc.translatePath(DL_DonorPath))
-            DonorDownload = True   
-            xbmc.log('script.pseudotv.live-donordownload: Removed DL_DonorPath')  
-        except Exception,e:
-            xbmc.log(str(e))
-            Error = True
-            xbmc.log('script.pseudotv.live-donordownload: Removed DL_DonorPath Failed!' + str(e))  
-            pass  
-else:
-    DonorDownload = True  
-    xbmc.log('script.pseudotv.live-donordownload: Installing Donor Features')   
+def autopatch():
+    xbmc.log('script.pseudotv.live-donordownload: autopatch')
+    MSG = 'Donor Autoupdate Complete'
+    
+    try:
+        os.remove(xbmc.translatePath(DL_DonorPath))
+    except:
+        pass
         
-if DonorDownload:
-    # Download Donor.py
+    try:
+        os.remove(xbmc.translatePath(DonorPath))  
+    except:
+        pass
+        
     try:
         urllib.urlretrieve(DonorURLPath, (xbmc.translatePath(DL_DonorPath)))
-        xbmc.log('script.pseudotv.live-donordownload: Downloading DL_DonorPath')   
-        REAL_SETTINGS.setSetting('Donor_Update', "false")
+        xbmc.log('script.pseudotv.live-donordownload: autopatch, Downloading DL_DonorPath')   
+        
         if xbmcvfs.exists(DL_DonorPath):
-            Installed = True
-        else:
-            Error = True
-            Installed = False
-    except Exception,e:
-        xbmc.log(str(e))
-        xbmc.log('script.pseudotv.live-donordownload: Downloading DL_DonorPath Failed!' + str(e))  
-        Error = True
+            REAL_SETTINGS.setSetting("AT_Donor", "true")
+            REAL_SETTINGS.setSetting("COM_Donor", "true")
+            REAL_SETTINGS.setSetting("TRL_Donor", "true")
+            REAL_SETTINGS.setSetting("CAT_Donor", "true")
+            xbmc.log('script.pseudotv.live-donordownload: autopatch, Settings.xml Patched')
+            xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoTV Live", MSG, 4000, THUMB) ) 
+    except:
         pass
-
-if Error:
-    MSG = "Donor Features Activated\Update Failed!\nTry Again Later..."
-
-if Installed:
-    MSG = "Donor Features Activated\Updated"
-else:
-    MSG = "Donor Features Not Updated..."
     
-xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoTV Live", MSG, 1000, THUMB) )
+
+def DonorDownloader():
+    xbmc.log('script.pseudotv.live-donordownload: DonorDownloader')
+    Install = False
+    Verified = False
+    InstallStatusMSG = 'Activate'  
+    if xbmcvfs.exists(DonorPath):
+        InstallStatusMSG = 'Update'
+        if dlg.yesno("PseudoTV Live", str(InstallStatusMSG) + " Donor Features?"):
+            try:
+                os.remove(xbmc.translatePath(DonorPath))
+                xbmc.log('script.pseudotv.live-donordownload: Removed DonorPath')  
+                Install = True
+            except Exception,e:
+                xbmc.log('script.pseudotv.live-donordownload: Removed DonorPath Failed! ' + str(e)) 
+                pass
+    else:  
+        Install = True
+    
+    if Install == True:
+        xbmc.log('script.pseudotv.live-donordownload: DonorDownload')    
+        try:                   
+            urllib.urlretrieve(DonorURLPath, (xbmc.translatePath(DL_DonorPath)))
+            xbmc.log('script.pseudotv.live-donordownload: Downloading DL_DonorPath')   
+            if xbmcvfs.exists(DL_DonorPath):
+                REAL_SETTINGS.setSetting("AT_Donor", "true")
+                REAL_SETTINGS.setSetting("COM_Donor", "true")
+                REAL_SETTINGS.setSetting("TRL_Donor", "true")
+                REAL_SETTINGS.setSetting("CAT_Donor", "true")
+            
+                if REAL_SETTINGS.getSetting('AT_Donor') and REAL_SETTINGS.getSetting('COM_Donor') and REAL_SETTINGS.getSetting('TRL_Donor') and REAL_SETTINGS.getSetting('CAT_Donor'):
+                    Verified = True
+                    xbmc.log('script.pseudotv.live-donordownload: Settings.xml Patched')
+
+            if Verified == True:
+                MSG = "Donor Features " + str(InstallStatusMSG) + "d"
+            else:
+                MSG = "Donor Features Not " + str(InstallStatusMSG) + "d"
+                
+            xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoTV Live", MSG, 1000, THUMB) ) 
+            REAL_SETTINGS.openSettings()
+
+        except Exception,e:
+            xbmc.log('script.pseudotv.live-donordownload: Downloading DL_DonorPath Failed! ' + str(e))  
+            pass
+           
+            
+def LogoDownloader():
+    xbmc.log('script.pseudotv.live-donordownload: LogoDownloader')
+    
+    LogoPath = xbmc.translatePath(os.path.join(SETTINGS_LOC))
+    
+    if dlg.yesno("PseudoTV Live", "Download Color Logos or No, Download Mono Logos", ""):
+        LogoDEST = LogoPath + '/PTVL_Color.zip'
+        i = 1
+    else:
+        LogoDEST = LogoPath + '/PTVL_Mono.zip'
+        i = 2
+
+    if not DEFAULT_LOGO_LOC:
+        os.makedirs(DEFAULT_LOGO_LOC)
+        
+    try:
+        os.remove(xbmc.translatePath(LinkPath))
+    except:
+        pass
+         
+    try:
+        urllib.urlretrieve(LinkURLPath, (xbmc.translatePath(LinkPath)))
+        f = FileAccess.open((xbmc.translatePath(LinkPath)), "r")
+        linesLST = f.readlines()
+        LogoURLPath = linesLST[i] 
+        download(LogoURLPath, LogoDEST)
+        all(LogoDEST, LogoPath)
+        REAL_SETTINGS.setSetting("ChannelLogoFolder", DEFAULT_LOGO_LOC)
+        os.remove(LogoDEST)
+    except:
+        pass
+        
+    REAL_SETTINGS.openSettings()
+        
+       
+if sys.argv[1] == '-autopatch':
+    autopatch()   
+elif sys.argv[1] == '-DonorDownloader':
+    DonorDownloader()
+elif sys.argv[1] == '-LogoDownloader':
+    LogoDownloader()
+elif sys.argv[1] == '-SimpleDownloader':
+    xbmcaddon.Addon(id='script.module.simple.downloader').openSettings()
+    

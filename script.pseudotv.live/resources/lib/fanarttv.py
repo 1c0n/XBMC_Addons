@@ -44,6 +44,7 @@ except Exception,e:
 
 # import libraries
 from urllib2 import HTTPError, URLError
+from language import *
 
 # Cache bool
 CACHE_ON = True
@@ -54,33 +55,72 @@ API_URL_MOVIE = 'http://api.fanart.tv/webservice/movie/%s/%s/json/all/1/2/'
 
 IMAGE_TYPES = ['clearlogo',
                'hdtvlogo',
-               'tvposter',
-               'showbackground',
                'clearart',
                'hdclearart',
                'tvthumb',
-               # 'seasonthumb',
                'characterart',
                'tvbanner',
-               # 'seasonbanner',
                'movielogo',
-               'moviedisc',
-               'movieart',
-               'movieposter',
-               'moviebackground',
                'hdmovielogo',
+               'movieart',
+               'moviedisc',
                'hdmovieclearart',
-               'moviebanner',
-               'moviethumb']
+               'moviethumb',
+               'moviebanner']
 
                
-class FTV_TVProvider():
+# Retrieve JSON data from cache function
+def get_data(url, data_type ='json'):
+    xbmc.log('script.pseudotv.live-fanarttv: get_data')
+    #log('API: %s'% url)
+    if CACHE_ON:
+        result = parsers.cacheFunction(get_data_new, url, data_type)
+    else:
+        result = get_data_new(url, data_type)
+    if not result:
+        result = 'Empty'
+    return result
 
-    def __init__(self):
-        self.name = 'fanart.tv - TV API'
 
-    def get_image_list(self, media_id):
-        data = self.get_data(API_URL_TV%(API_KEY,media_id), 'json')
+# Retrieve JSON data from site
+def get_data_new(url, data_type):
+    #log('Cache expired. Retrieving new data')
+    data = []
+    try:
+        request = urllib2.Request(url)
+        # TMDB needs a header to be able to read the data
+        if url.startswith("http://api.themoviedb.org"):
+            request.add_header("Accept", "application/json")
+        req = urllib2.urlopen(request)
+        if data_type == 'json':
+            data = json.loads(req.read())
+            if not data:
+                data = 'Empty'
+        else:
+            data = req.read()
+        req.close()
+    except HTTPError, e:
+        if e.code == 400:
+            raise HTTP400Error(url)
+        elif e.code == 404:
+            raise HTTP404Error(url)
+        elif e.code == 503:
+            raise HTTP503Error(url)
+        else:
+            raise DownloadError(str(e))
+    except URLError:
+        raise HTTPTimeout(url)
+    except socket.timeout, e:
+        raise HTTPTimeout(url)
+    except:
+        data = 'Empty'
+    return data
+
+
+def get_image_list_TV(media_id):
+    xbmc.log('script.pseudotv.live-fanarttv: get_image_list_TV')
+    try:
+        data = get_data(API_URL_TV%(API_KEY,media_id), 'json')
         image_list = []
         if data == 'Empty' or not data:
             return image_list
@@ -91,17 +131,13 @@ class FTV_TVProvider():
                     if value.has_key(art):
                         for item in value[art]:
                             # Check on what type and use the general tag
-                            arttypes = {'clearlogo': 'logo',
-                                        'hdtvlogo': 'logo',
-                                        'tvposter': 'poster',
-                                        'showbackground': 'tvfanart',
+                            arttypes = {'clearlogo': 'clearlogo',
+                                        'hdtvlogo': 'clearlogo',
                                         'clearart': 'clearart',
                                         'hdclearart': 'clearart',
                                         'tvthumb': 'landscape',
-                                        # 'seasonthumb': 'seasonlandscape',
-                                        'characterart': 'character',
+                                        'characterart': 'characterart',
                                         'tvbanner': 'banner',
-                                        # 'seasonbanner': 'seasonbanner',
                                         }
                             if art in ['hdtvlogo', 'hdclearart']:
                                 size = 'HD'
@@ -109,77 +145,31 @@ class FTV_TVProvider():
                                 size = 'SD'
                             else:
                                 size = ''
+                            generalinfo = '%s: %s  |  ' %( 'Language', get_language(item.get('lang')).capitalize())
+                            # Fill list
                             image_list.append({'url': urllib.quote(item.get('url'), ':/'),
                                                'preview': item.get('url') + '/preview',
                                                'id': item.get('id'),
                                                'art_type': [arttypes[art]],
                                                'size': size,
-                                               'season': item.get('season','n/a'),
-                                               'language': item.get('lang'),
-                                               'votes': item.get('likes')})
+                                               'language': item.get('lang','en'),
+                                               'votes': int(item.get('likes')),
+                                               'generalinfo': generalinfo})
             if image_list == []:
-                pass
+                raise
             else:
                 # Sort the list before return. Last sort method is primary
                 image_list = sorted(image_list, key=itemgetter('votes'), reverse=True)
                 image_list = sorted(image_list, key=itemgetter('size'), reverse=False)
-                # image_list = sorted(image_list, key=itemgetter('language'))
+                image_list = sorted(image_list, key=itemgetter('language'))
                 return image_list
-    
-      
-    # Retrieve JSON data from cache function
-    def get_data(self, url, data_type ='json'):
-        xbmc.log('API: %s'% url)
-        if CACHE_ON:
-            result = monthly.cacheFunction(self.get_data_new, url, data_type)
-        else:
-            result = self.get_data_new(url, data_type)    
-        if not result:
-            result = 'Empty'
-        return result             
-                   
-    # Retrieve JSON data from site
-    def get_data_new(self, url, data_type):
-        xbmc.log('Cache expired. Retrieving new data')
-        data = []
-        try:
-            request = urllib2.Request(url)
-            # TMDB needs a header to be able to read the data
-            if url.startswith("http://api.themoviedb.org"):
-                request.add_header("Accept", "application/json")
-            req = urllib2.urlopen(request)
-            if data_type == 'json':
-                data = json.loads(req.read())
-                if not data:
-                    data = 'Empty'
-            else:
-                data = req.read()
-            req.close()
-        except HTTPError, e:
-            if e.code == 400:
-                raise HTTP400Error(url)
-            elif e.code == 404:
-                raise HTTP404Error(url)
-            elif e.code == 503:
-                raise HTTP503Error(url)
-            else:
-                raise DownloadError(str(e))
-        except URLError:
-            raise HTTPTimeout(url)
-        except socket.timeout, e:
-            raise HTTPTimeout(url)
-        except Exception,e:
-            data = 'Empty'
-        return data       
+    except:
+        pass
 
-    
-class FTV_MovieProvider():
-
-    def __init__(self):
-        self.name = 'fanart.tv - Movie API'
-
-    def get_image_list(self, media_id):
-        data = self.get_data(API_URL_MOVIE%(API_KEY,media_id), 'json')
+def get_image_list_Movie( media_id):
+    xbmc.log('script.pseudotv.live-fanarttv: get_image_list_Movie')
+    try:
+        data = get_data(API_URL_MOVIE%(API_KEY, media_id), 'json')
         image_list = []
         if data == 'Empty' or not data:
             return image_list
@@ -190,12 +180,10 @@ class FTV_MovieProvider():
                     if value.has_key(art):
                         for item in value[art]:
                             # Check on what type and use the general tag
-                            arttypes = {'movielogo': 'logo',
-                                        'moviedisc': 'disc',
+                            arttypes = {'movielogo': 'clearlogo',
+                                        'moviedisc': 'discart',
                                         'movieart': 'clearart',
-                                        'movieposter': 'poster',
-                                        'moviebackground':'moviefanart',
-                                        'hdmovielogo': 'logo',
+                                        'hdmovielogo': 'clearlogo',
                                         'hdmovieclearart': 'clearart',
                                         'moviebanner': 'banner',
                                         'moviethumb': 'landscape'}
@@ -205,69 +193,25 @@ class FTV_MovieProvider():
                                 size = 'SD'
                             else:
                                 size = ''
+                            generalinfo = '%s: %s  |  ' %( 'Language', get_language(item.get('lang')).capitalize())
+                            # Fill list
                             image_list.append({'url': urllib.quote(item.get('url'), ':/'),
                                                'preview': item.get('url') + '/preview',
                                                'id': item.get('id'),
                                                'art_type': [arttypes[art]],
                                                'size': size,
-                                               'season': item.get('season','n/a'),
-                                               'language': item.get('lang'),
-                                               'votes': item.get('likes'),
+                                               'language': item.get('lang','en'),
+                                               'votes': int(item.get('likes')),
                                                'disctype': item.get('disc_type','n/a'),
-                                               'discnumber': item.get('disc','n/a')})
+                                               'discnumber': item.get('disc','n/a'),
+                                               'generalinfo': generalinfo})
             if image_list == []:
-                pass
+                raise
             else:
                 # Sort the list before return. Last sort method is primary
                 image_list = sorted(image_list, key=itemgetter('votes'), reverse=True)
                 image_list = sorted(image_list, key=itemgetter('size'), reverse=False)
-                # image_list = sorted(image_list, key=itemgetter('language'))
+                image_list = sorted(image_list, key=itemgetter('language'))
                 return image_list
-                    
-      
-    # Retrieve JSON data from cache function
-    def get_data(self, url, data_type ='json'):
-        xbmc.log('API: %s'% url)
-        if CACHE_ON:
-            result = monthly.cacheFunction(self.get_data_new, url, data_type)
-        else:
-            result = self.get_data_new(url, data_type)    
-        if not result:
-            result = 'Empty'
-        return result             
-                   
-    # Retrieve JSON data from site
-    def get_data_new(self, url, data_type):
-        xbmc.log('Cache expired. Retrieving new data')
-        data = []
-        try:
-            request = urllib2.Request(url)
-            # TMDB needs a header to be able to read the data
-            if url.startswith("http://api.themoviedb.org"):
-                request.add_header("Accept", "application/json")
-            req = urllib2.urlopen(request)
-            if data_type == 'json':
-                data = json.loads(req.read())
-                if not data:
-                    data = 'Empty'
-            else:
-                data = req.read()
-            req.close()
-        except HTTPError, e:
-            if e.code == 400:
-                raise HTTP400Error(url)
-            elif e.code == 404:
-                raise HTTP404Error(url)
-            elif e.code == 503:
-                raise HTTP503Error(url)
-            else:
-                raise DownloadError(str(e))
-        except URLError:
-            raise HTTPTimeout(url)
-        except socket.timeout, e:
-            raise HTTPTimeout(url)
-        except Exception,e:
-            data = 'Empty'
-        return data       
-
-    
+    except:
+        pass

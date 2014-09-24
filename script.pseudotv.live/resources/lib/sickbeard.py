@@ -50,16 +50,6 @@ class SickBeard(object):
         return url
 
     def isShowManaged(self, tvdbid):
-        xbmc.log("script.pseudotv.live-sickbeard: isShowManaged Cache")
-        if CACHE_ON:
-            result = monthly.cacheFunction(self.isShowManaged_NEW, tvdbid)
-        else:
-            result = self.isShowManaged_NEW(tvdbid)    
-        if not result:
-            result = 'Empty'
-        return result      
-        
-    def isShowManaged_NEW(self, tvdbid):
         xbmc.log("script.pseudotv.live-sickbeard: isShowManaged Creating Cache")
         response = json.load(urllib.urlopen(self._buildUrl('show', {'tvdbid' : tvdbid})))
         return response['result'] == 'success'

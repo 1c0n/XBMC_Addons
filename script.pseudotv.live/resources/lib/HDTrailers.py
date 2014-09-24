@@ -43,6 +43,7 @@ SOURCES = (
     'aol.com'
 )
 
+
 class NetworkError(Exception):
     pass
 
@@ -58,17 +59,17 @@ def get_most_watched():
 
 
 def get_top_ten():
-    url = MAIN_URL + 'top-movies'
+    url = MAIN_URL + 'top-movies/'
     return _get_movies(url)
 
 
 def get_opening_this_week():
-    url = MAIN_URL + 'opening-this-week'
+    url = MAIN_URL + 'opening-this-week/'
     return _get_movies(url)
 
 
 def get_coming_soon():
-    url = MAIN_URL + 'coming-soon'
+    url = MAIN_URL + 'coming-soon/'
     return _get_movies(url)
 
 
@@ -80,7 +81,7 @@ def get_by_initial(initial='0'):
 def get_initials():
     return list('0ABCDEFGHIJKLMNOPQRSTUVWXYZ')
 
-    
+
 def get_videos(movie_id):
     url = MAIN_URL + 'movie/%s' % movie_id
     tree = __get_tree(url)
@@ -110,12 +111,12 @@ def get_videos(movie_id):
                 if td.a:
                     resolutions[td.a.string] = td.a['href']
             if not resolutions:
-                log('No resolutions found: %s' % movie_id)
+##                log('No resolutions found: %s' % movie_id)
                 continue
             try:
                 source = __detect_source(resolutions.values()[0])
             except NotImplementedError, video_url:
-                log('Skipping: %s - %s' % (movie_id, video_url))
+##                log('Skipping: %s - %s' % (movie_id, video_url))
                 continue
             section.append({
                 'title': tr.contents[3].span.string,
@@ -124,7 +125,7 @@ def get_videos(movie_id):
                 'resolutions': resolutions
             })
     return movie, trailers, clips
- 
+
 
 def get_yahoo_url(vid, res):
     data_url = (
@@ -170,20 +171,20 @@ def __format_date(date_str):
 
 
 def __get_tree(url):
-    log('__get_tree opening url: %s' % url)
+##    log('__get_tree opening url: %s' % url)
     headers = {'User-Agent': USER_AGENT}
     req = urllib2.Request(url, None, headers)
     try:
         html = urllib2.urlopen(req).read()
     except urllib2.HTTPError, error:
         raise NetworkError('HTTPError: %s' % error)
-    log('__get_tree got %d bytes' % len(html))
+##    log('__get_tree got %d bytes' % len(html))
     tree = BeautifulSoup(html, convertEntities=BeautifulSoup.HTML_ENTITIES)
     return tree
 
 
 def __get_json(url):
-    log('__get_json opening url: %s' % url)
+##    log('__get_json opening url: %s' % url)
     headers = {'User-Agent': USER_AGENT}
     req = urllib2.Request(url, None, headers)
     try:
@@ -196,11 +197,21 @@ def __get_json(url):
 def log(msg):
     print(u'%s scraper: %s' % (USER_AGENT, msg))
 
-    
+
 def get_playable_url(source, raw_url):
-    print source
+##    print source
     if source == 'apple.com':
         raw_url = '%s' % raw_url
+##    elif source == 'yahoo-redir':
+##        res = raw_url[-3:]
+##        print res
+##        raw_url = get_yahoo_url(raw_url, res)
+###############################################
+##    elif source == 'yahoo-redir':
+##        import re
+##        vid, res = re.search('id=(.+)&resolution=(.+)', raw_url).groups()
+##        raw_url = get_yahoo_url(vid, res)
+##############################################
     elif source == 'youtube.com':
         import re
         video_id = re.search(r'v=(.+)&?', raw_url).groups(1)
@@ -208,8 +219,7 @@ def get_playable_url(source, raw_url):
             'plugin://plugin.video.youtube/'
             '?action=play_video&videoid=%s' % video_id
         )
-##    elif source == 'yahoo-redir':
-##        import re
-##        vid, res = re.search('id=(.+)&resolution=(.+)', raw_url).groups()
-##        raw_url = get_yahoo_url(vid, res)
+    elif source == 'hd-trailers.net':
+        raw_url = raw_url
+
     return raw_url

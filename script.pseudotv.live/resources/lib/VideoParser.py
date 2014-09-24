@@ -1,4 +1,4 @@
-#   Copyright (C) 2011 Jason Anderson
+#   Copyright (C) 2011 Lunatixz
 #
 #
 # This file is part of PseudoTV.

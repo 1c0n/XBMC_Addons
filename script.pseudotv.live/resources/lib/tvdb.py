@@ -37,6 +37,7 @@ else:
     
 from Globals import *
 from xml.etree import ElementTree as ET
+from language import *
 
 # Commoncache plugin import
 try:
@@ -63,7 +64,7 @@ class TVDB(object):
     def getIdByZap2it(self, zap2it_id):
         xbmc.log("getIdByZap2it Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getIdByZap2it_NEW, zap2it_id)
+            result = parsers.cacheFunction(self.getIdByZap2it_NEW, zap2it_id)
         else:
             result = self.getIdByZap2it_NEW(zap2it_id)
         if not result:
@@ -86,7 +87,7 @@ class TVDB(object):
     def getIdByIMDB(self, imdb_id):
         xbmc.log("getIdByIMDB Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getIdByIMDB_NEW, imdb_id)
+            result = parsers.cacheFunction(self.getIdByIMDB_NEW, imdb_id)
         else:
             result = self.getIdByIMDB_NEW(imdb_id)
         if not result:
@@ -110,7 +111,7 @@ class TVDB(object):
     def getEpisodeByAirdate(self, tvdbid, airdate):
         xbmc.log("getEpisodeByAirdate Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getEpisodeByAirdate_NEW, tvdbid, airdate)
+            result = parsers.cacheFunction(self.getEpisodeByAirdate_NEW, tvdbid, airdate)
         else:
             result = self.getEpisodeByAirdate_NEW(tvdbid, airdate)
         if not result:
@@ -128,7 +129,7 @@ class TVDB(object):
     def getEpisodeByID(self, tvdbid):
         xbmc.log("getIdByIMDB Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getEpisodeByID_NEW, tvdbid)
+            result = parsers.cacheFunction(self.getEpisodeByID_NEW, tvdbid)
         else:
             result = self.getEpisodeByID_NEW(tvdbid)
         if not result:
@@ -146,7 +147,11 @@ class TVDB(object):
     def getIdByShowName(self, showName):
         xbmc.log("getIdByShowName Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getIdByShowName_NEW, showName)
+            try:
+                result = parsers.cacheFunction(self.getIdByShowName_NEW, showName)
+            except:
+                result = self.getIdByShowName_NEW(showName)
+                pass
         else:
             result = self.getIdByShowName_NEW(showName)
         if not result:
@@ -170,7 +175,7 @@ class TVDB(object):
     def getBannerByID(self, tvdbid, type):
         xbmc.log("getIdByZap2it Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getBannerByID_NEW, tvdbid, type)
+            result = parsers.cacheFunction(self.getBannerByID_NEW, tvdbid, type)
         else:
             result = self.getBannerByID_NEW(tvdbid, type)
         if not result:
@@ -207,7 +212,11 @@ class TVDB(object):
     def getIMDBbyShowName(self, showName):
         xbmc.log("getIMDBbyShowName Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getIMDBbyShowName_NEW, showName)
+            try:
+                result = parsers.cacheFunction(self.getIMDBbyShowName_NEW, showName)
+            except:
+                result = self.getIMDBbyShowName_NEW(showName)
+                pass
         else:
             result = self.getIMDBbyShowName_NEW(showName)
         if not result:
@@ -291,7 +300,12 @@ class TVDB(object):
                         info['season'] = image.findtext('Season')
                     else:
                         info['season'] = 'n/a'
-
+                    
+                    info['generalinfo'] = '%s: %s  |  ' %( 'Language', get_language(info['language']).capitalize())
+                        
+                    if info:
+                        image_list.append(info)
+                        
         except Exception,e:
             pass
         if image_list == []:
@@ -308,7 +322,11 @@ class TVDB(object):
     def get_data(self, url, data_type ='json'):
         log('Downloader: get_data - Cache')
         if CACHE_ON:
-            result = monthly.cacheFunction(self.get_data_new, url, data_type)
+            try:
+                result = parsers.cacheFunction(self.get_data_new, url, data_type)
+            except:
+                result = self.get_data_new(url, data_type)
+                pass
         else:
             result = self.get_data_new(url, data_type)
         if not result:

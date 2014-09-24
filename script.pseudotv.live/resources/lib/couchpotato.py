@@ -49,18 +49,8 @@ class CouchPotato(object):
         #xbmc.log('imdbid=%s, result=%s' % (imdbid, response['added']))
         return response['added'] == 'true'
 
+        
     def getMoviebyTitle(self, title):
-        xbmc.log("getMoviebyTitle Cache")
-        if CACHE_ON:
-            result = monthly.cacheFunction(self.getMoviebyTitle_NEW, title)
-        else:
-            result = self.getMoviebyTitle_NEW(title)
-        if not result:
-            result = 'Empty'
-        return result    
-    
-    def getMoviebyTitle_NEW(self, title):
-        xbmc.log("getMoviebyTitle Creating Cache")
         response = json.load(urllib.urlopen(self._buildUrl('movie.list', {'search' : title})))
         return response
         #return self._api_call('movie.list', params).get('movies', [])

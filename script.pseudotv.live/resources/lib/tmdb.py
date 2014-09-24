@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 #
-#     Copyright (C) 2011-2014 Tommy Winther, Lunatixz, Martijn Kaijser Kaijser
+#     Copyright (C) 2011-2014 Tommy Winther, Lunatixz, Martijn Kaijser
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -35,6 +35,7 @@ else:
 
 # import libraries
 from urllib2 import HTTPError, URLError
+from language import *
 
 # import libraries
 from operator import itemgetter
@@ -62,11 +63,14 @@ class TMDB(object):
         # return 'TMDB(apikey=%s, baseurl=%s, imagebaseurl=%s)' % (self.apikey,self.baseurl,self.imagebaseurl)
 
     def _buildUrl(self, cmd, parms={}):
+        # try:
         parmsCopy = parms.copy()
         parmsCopy.update({'api_key' : self.apikey})
         url = '%s/%s?%s' % (self.baseurl, cmd, urllib.urlencode(parmsCopy))
         #self.xbmc.log(url)
         return url
+        # except:
+            # pass
 
     # def _getPosterBaseUrl(self):
         # response = json.loads(urllib2.urlopen(urllib2.Request(self._buildUrl('configuration'), headers={"Accept": "application/json"})).read())
@@ -77,28 +81,53 @@ class TMDB(object):
         # return '%s%s%s' % (self.imagebaseurl, 'w92/', filename)
 
     def getMovie(self, movieName, year):
-        xbmc.log("getMovie Cache")
         if CACHE_ON:
-            result = monthly.cacheFunction(self.getMovie_NEW, movieName, year)
+            try:
+                result = parsers.cacheFunction(self.getMovie_NEW, movieName, year)
+            except:
+                result = self.getMovie_NEW(movieName, year)
+                pass                
         else:
             result = self.getMovie_NEW(movieName, year)
         if not result:
-            result = 'Empty'
+            result = 0
         return result 
 
     def getMovie_NEW(self, movieName, year):
-        xbmc.log("getMovie Creating Cache")
         #self.xbmc.log('movieName: %s' % movieName)
-        response = json.loads(urllib2.urlopen(urllib2.Request(self._buildUrl('search/movie', {'query' : movieName, 'year' : year}), headers={"Accept": "application/json"})).read())
-        if response['total_results'] > 0:
-            #self.xbmc.log('Response: \r\n%s' % response)
-            response = json.loads(urllib2.urlopen(urllib2.Request(self._buildUrl('movie/%s' % (response['results'][0]['id'])), headers={"Accept": "application/json"})).read())
-        else:
-            #self.xbmc.log('No matches found for %s' % movieName)
-            response = json.loads('{"imdb_id":"", "poster_path":""}')
-        #print response
+        try:
+            response = json.loads(urllib2.urlopen(urllib2.Request(self._buildUrl('search/movie', {'query' : movieName, 'year' : year}), headers={"Accept": "application/json"})).read())
+            if response['total_results'] > 0:
+                #self.xbmc.log('Response: \r\n%s' % response)
+                response = json.loads(urllib2.urlopen(urllib2.Request(self._buildUrl('movie/%s' % (response['results'][0]['id'])), headers={"Accept": "application/json"})).read())
+            else:
+                #self.xbmc.log('No matches found for %s' % movieName)
+                response = json.loads('{"imdb_id":"", "poster_path":""}')
+            #print response
+        except:
+            response = ''
+            pass
         return response
-
+        
+    def getMPAA(self, imdbid):
+        if CACHE_ON:
+            try:
+                result = parsers.cacheFunction(self.getMPAA_NEW, imdbid)
+            except:
+                result = self.getMPAA_NEW(imdbid)
+                pass               
+        else:
+            result = self.getMPAA_NEW(imdbid)
+        if not result:
+            result = 'NA'
+        return result 
+        
+    def getMPAA_NEW(self, imdbid):
+        response = str(json.loads(urllib2.urlopen(urllib2.Request('https://api.themoviedb.org/3/movie/'+imdbid+'/releases?api_key='+self.apikey+'&language=en', headers={"Accept": "application/json"})).read()))
+        response = response.split("certification': u'")[1]
+        response = response.split("'}")[0]
+        return response
+        
     def getIMDBId(self, movieName, year):
         response = self.getMovie(movieName, year)
         return response['imdb_id']
@@ -145,7 +174,9 @@ class TMDB(object):
                                        'width': item.get('width'),
                                        'language': item.get('iso_639_1','n/a'),
                                        'rating': rating,
-                                       'votes': votes})
+                                       'votes': votes,
+                                       'generalinfo': ('%s: %s' 
+                                                       %( 'Language', get_language(item.get('iso_639_1','n/a')).capitalize()))})
             except Exception, e:
                 xbmc.log( 'Problem report: %s' %str( e ), xbmc.LOGNOTICE )
             # Get thumbs
@@ -166,7 +197,9 @@ class TMDB(object):
                                        'width': item.get('width'),
                                        'language': item.get('iso_639_1','n/a'),
                                        'rating': rating,
-                                       'votes': votes})
+                                       'votes': votes,
+                                       'generalinfo': ('%s: %s' 
+                                                       %( 'Language', get_language(item.get('iso_639_1','n/a')).capitalize()))})
             except Exception, e:
                 xbmc.log( 'Problem report: %s' %str( e ), xbmc.LOGNOTICE )
             # Get posters
@@ -187,7 +220,9 @@ class TMDB(object):
                                        'width': item.get('width'),
                                        'language': item.get('iso_639_1','n/a'),
                                        'rating': rating,
-                                       'votes': votes})
+                                       'votes': votes,
+                                       'generalinfo': ('%s: %s' 
+                                                       %( 'Language', get_language(item.get('iso_639_1','n/a')).capitalize().capitalize()))})
             except Exception, e:
                 xbmc.log( 'Problem report: %s' %str( e ), xbmc.LOGNOTICE )
             if image_list == []:
@@ -198,6 +233,7 @@ class TMDB(object):
                 image_list = sorted(image_list, key=itemgetter('language'))
                 return image_list
 
+                
     def _search_movie(medianame,year=''):
         medianame = normalize_string(medianame)
         xbmc.log('TMDB API search criteria: Title[''%s''] | Year[''%s'']' % (medianame,year) )
@@ -230,7 +266,11 @@ class TMDB(object):
     def get_data(self, url, data_type ='json'):
         log('Downloader: get_data - Cache')
         if CACHE_ON:
-            result = monthly.cacheFunction(self.get_data_new, url, data_type)
+            try:
+                result = parsers.cacheFunction(self.get_data_new, url, data_type)
+            except:
+                result = self.get_data_new(url, data_type)
+                pass
         else:
             result = self.get_data_new(url, data_type)
         if not result:

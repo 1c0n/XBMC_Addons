@@ -33,7 +33,7 @@
             <posy>130</posy>
             <width>600</width>
             <height>40</height>
-            <label>PseudoTV</label>
+            <label>PseudoTV Live</label>
 			<font>font24_title</font>
             <textcolor>FF000000</textcolor>
             <aligny>center</aligny>
@@ -263,7 +263,7 @@
                 <width>300</width>
                 <height>30</height>
                 <label>Advanced Channel Rules</label>
-                <texturefocus>pstvlButtonFocus.png</texturefocus>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
                 <texturenofocus border="2,2,2,2">pstvlBorder2.png</texturenofocus>
                 <textcolor>FF000000</textcolor>
                 <onup>107</onup>
@@ -277,7 +277,7 @@
                 <width>120</width>
                 <height>40</height>
                 <label>Ok</label>
-                <texturefocus>pstvlButtonFocus.png</texturefocus>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
                 <texturenofocus border="2,2,2,2">pstvlBorder2.png</texturenofocus>
                 <textcolor>FF000000</textcolor>
                 <onup>114</onup>
@@ -292,7 +292,7 @@
                 <width>120</width>
                 <height>40</height>
                 <label>Cancel</label>
-                <texturefocus>pstvlButtonFocus.png</texturefocus>
+                <texturefocus>pstvButtonFocus.png</texturefocus>
                 <texturenofocus border="2,2,2,2">pstvlBorder2.png</texturenofocus>
                 <textcolor>FF000000</textcolor>
                 <onup>114</onup>

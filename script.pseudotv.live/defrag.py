@@ -1,6 +1,8 @@
 def main():
     pass
 
+if __name__ == '__main__':
+    main()
 
 import os, sys, re, shutil
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
@@ -11,8 +13,8 @@ from resources.lib.FileAccess import *
 settingsFile = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'settings2.xml'))
 nsettingsFile = xbmc.translatePath(os.path.join(SETTINGS_LOC, 'new_settings2.xml'))
 
-OpnFil = FileAccess.open(settingsFile, "rb")
-WrtFil = FileAccess.open(settingsFile, "wb")
+OpnFil = FileAccess.open(settingsFile, "r")
+WrtFil = FileAccess.open(settingsFile, "w")
 WrtFil.write('<settings> \n')
 
 # Number of total lines in Settings2.xml file
@@ -25,6 +27,7 @@ nr_of_lines = len(OpnFil.readlines())
 
 High_Chan_Num = 0
 OpnFil.seek(0, 2)  # Start file at the first line
+
 for line in range(1, nr_of_lines): # Equal length of file
     Xstring = str(OpnFil.readlines()) #Input line as string from Settings2.xml file
     ins = Xstring.split("_")    # Split the line into parts using "_" delimeter
@@ -122,6 +125,3 @@ os.remove(settingsFile)
 FileAccess.rename(nsettingsFile, settingsFile)
 # except:
     # pass
-
-if __name__ == '__main__':
-    main()

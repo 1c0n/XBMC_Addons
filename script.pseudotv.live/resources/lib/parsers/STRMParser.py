@@ -34,33 +34,28 @@ class STRMParser:
         self.log("determineLength " + filename)
         fleName, fleExt = os.path.splitext(filename)
         fleName += '.nfo'
-        runtime = 0
+        duration = 0
         durationinseconds = 0
         
         if FileAccess.exists(fleName):
-            try:
-                file = FileAccess.open(fleName, "r")
-                dom = parse(file)
-                xmlruntime = dom.getElementsByTagName('runtime')[0].toxml()
+            file = FileAccess.open(fleName, "r")
+            dom = parse(file)
+            
+            try:                    
                 xmldurationinseconds = dom.getElementsByTagName('durationinseconds')[0].toxml()
-                runtime = xmlruntime.replace('<runtime>','').replace('</runtime>','')    
-                runtime = int(runtime)
-                durationinseconds = xmlruntime.replace('<durationinseconds>','').replace('</durationinseconds>','')    
-                durationinseconds = int(durationinseconds)
-            except:
-                self.log("Unable to open file, defaulting to 3600")
-                self.log(traceback.format_exc(), xbmc.LOGERROR)
-                dur = 3600
-                return dur
-
-        if runtime == 0:
-            if durationinseconds != 0:
-                dur = durationinseconds
-            else:
-                self.log('Unable to find runtime and durationinseconds info, defaulting to 3600')
-                dur = 3600
-        else:
-            dur = runtime * 60
-
-        self.log("Duration is " + str(dur))
-        return dur
+                durationinseconds = xmldurationinseconds.replace('<durationinseconds>','').replace('</durationinseconds>','')    
+                duration = int(durationinseconds)
+            except Exception,e:
+                duration = 0
+                
+            if duration == 0:
+                try:
+                    xmlruntime = dom.getElementsByTagName('runtime')[0].toxml()
+                    runtime = xmlruntime.replace('<runtime>','').replace('</runtime>','')    
+                    runtime = int(runtime)
+                    duration = runtime * 60
+                except Exception,e:
+                    duration = 0
+                
+        return duration
+        self.log('script.pseudotv-STRMParser: duration = ' + str(duration))

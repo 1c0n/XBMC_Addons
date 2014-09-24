@@ -1,52 +1,43 @@
 PseudoTV Live
 ==================
-Channel surfing for your video library, livetv and Internettv...
 
-Find support @ http://forum.xbmc.org/showthread.php?tid=169032
+- Channel surfing for your Video, LiveTV, InternetTV and Plugin sources
+ 
+- Find support @ "ORG" http://forum.xbmc.org/showthread.php?tid=169032
+
+- --------------------------------- OR --------------------------------------
+
+- Find support @ "HUB" http://www.xbmchub.com/forums/forums/170-PSEUDOTV-LIVE
 
 ------------------
 Special thanks to:
 ------------------
 
-    - XBMC - Foundation
+- XBMC - Foundation
 
-    - jason102, angrycamel, jtucker1972 and bradvido88 - Core Code and inspiration.
+- XBMCHUB - Forum, and home to extremely talented developers.
 
-    - ARYEZ, thedarkonaut, tman12 - Skinning ideas and core code.
+- jason102, angrycamel, jtucker1972 - Core Code and inspiration.
 
-    - peppy6582 - RSS/Youtube parsing core code.
+- ARYEZ, thedarkonaut, tman12 - Skinning contributions.
 
-    - earlieb - EPG Sync Fix.
-    
-    - twinther - Various core coding and support.
+- peppy6582, earlieb, Steveb1968, blazin912, kurumushi - Code contributions.
+                    
+- twinther, LordIndy, ronie, mcorcoran, sphere, giftie, 
+  spoyser, Eldorados, lambda81, kickin and bradvido88  - All-Star Plugin Developers.
 
-    - Steveb1968 - Autostart core code.
+- RagnaroktA - CE Intro Video, Visit http://www.cinemavision.org/
 
-    - whufclee, scilz - Internet stream sourcing.
-
-    - blazin912 - HDhomerun Master/Slave mod.
-
-    - mwkurt, XvMMvX, spyder - Forum Help and support.
-
-    * All work is either original, or a modified code from the properly credited creators
-            
-
-------------------
-FU List:
-------------------
-
-    - geebs61, redhalo - Two forum douchebags!
+* All work is either original, or modified code from the properly credited creators.
 
 ------------------
 What is it?
 ------------------
 
-    It's channel-surfing for your media center.  Never again will you have to
-actually pick what you want to watch.  Use an electronic program guide (EPG)
-to view what's on or select a show to watch.  This script will let you create
-your own channels and, you know, watch them.  Doesn't actually sound useful
-when I have to write it in a readme.  Eh, try it and decide if it works for
-you.
+    It's channel-surfing for your media center.  Never again will you have to actually pick what you want to watch.  
+    Use an electronic program guide (EPG) to view what's on or select a show to watch.  This script will let you create
+    your own channels and, you know, watch them.  Doesn't actually sound useful when I have to write it in a readme.  
+    Eh, try it and decide if it works for you.
 
 ------------------
 Features
@@ -70,98 +61,94 @@ Features
 Setup
 ------------------
 
-    First, install it.  This is self-explanatory (hopefully).  Really, that's
-all that is necessary.  Default channels will be created without any
-intervention.  You can choose to setup channels (next step) if you wish.
-    Instructions to create your own channels.  Inside of the addon config, you
-may open the channel configuration tool.  Inside of here you can select a
-channel to modify.  You may then select it's type and any options.  For a basic
-setup, that's all you need to do.  It's worth noting that you may create a
-playlist using the smart playlist editor and then select that playlist in the
-channel config tool (Custom Playlist channel type).
-    Additionally, you may select to add advanced rules to a certain channel.
-There are quite a few rules that are currently available, and hopefully they
-should be relatively self-explanitory.  This is a readme and should include
-descriptions of them all...who knows, maybe it will some day.
-
+    First, install it.  This is self-explanatory (hopefully).  Really, that's all that is necessary.  
+    Default channels will be created without any intervention.  You can choose to setup channels (next step) 
+    if you wish. Instructions to create your own channels.  Inside of the addon config, you may open the channel         
+    configuration tool.  Inside of here you can select a channel to modify.  You may then select it's type and any 
+    options. For a basic setup, that's all you need to do.  It's worth noting that you may create a playlist using the 
+    smart playlist editor and then select that playlist in the channel config tool (Custom Playlist channel type). 
+    Additionally, you may select to add advanced rules to a certain channel. There are quite a few rules that are 
+    currently available, and hopefully they should be relatively self-explanitory.  This is a readme and should include 
+    descriptions of them all...who knows, maybe it will some day.
 
 ------------------
 Controls
 ------------------
 
-    There are only a few things you need to know in order to control every-
-thing.  First of all, the Stop button ('X') stops the video and exits the
-script.  You may also press the Previous Menu ('Escape') button to do this
-(don't worry, it will prompt you to verify first).  Scroll through channels
-using the arrow up and down keys, or alternatively by pressing Page up or down.
-    To open the EPG, press the Select key ('Enter').  Move around using
-the arrow keys.  Start a program by pressing Select.  Pressing Previous
-Menu ('Escape') will close the EPG.
-    Press 'I' to display or hide the info window.  When it is displayed,
-you can look at the previous and next shows on this channel using arrow left
-and right.
-
-
+    There are only a few things you need to know in order to control everything. First of all, the Stop button 
+    ('X') stops the video and exits the script.  You may also press the Previous Menu ('Escape') button to do 
+    this (don't worry, it will prompt you to verify first).  Scroll through channels using the arrow up and down 
+    keys, or alternatively by pressing Page up or down. You can also jump through the EPG using page up and down.
+    To open the EPG, press the Select key ('Enter'). Move around using the arrow keys. Start a program by pressing 
+    Select.  Pressing Previous Menu ('Escape') will close the EPG. Press 'I' to display or hide the info window.  
+    When it is displayed, you can look at the previous and next shows on this channel using arrow left and right.
+    
+    Additional controls: use keymap plugin to link these action to a remote key.
+    --------------------
+    Mute ('F8')
+    Last Channel Recall ('ACTION_SHIFT')
+    Subtitles ('S'),('ACTION_SHOW_SUBTITLES')
+    Show Codec ('ACTION_SHOW_CODEC')
+    Aspect Ratio ('ACTION_ASPECT_RATIO')
+    Record ('ACTION_RECORD') -- To be used with future PVR features.
+    
 ------------------
 Settings
 ------------------
 
 General Settings -
 
-    Configure Channels: This is the channel configuration tool.  From here you
-can modify the settings for each individual channel.
+- Configure Channels: This is the channel configuration tool.  From here you can modify the settings for each individual channel.
 
-    Auto-off Timer: The amount of time (in minutes) of idle time before the script
-is automatically stopped.
+- Auto-off Timer: The amount of time (in minutes) of idle time before the script is automatically stopped.
 
-    Force Channel Reset: If you want your channels to be reanalyzed then you
+- Force Channel Reset: If you want your channels to be reanalyzed then you
 can turn this on.
 
-    Time Between Channel Resets: This is how often your channels will be reset.
+- Time Between Channel Resets: This is how often your channels will be reset.
 Generally, this is done automatically based on the duration of the individual
 channels and how long they've been watched.  You can change this to reset every
 certain time period (day, week, month).
 
-    Default channel times at startup: This affects where the channels start
+- Default channel times at startup: This affects where the channels start
 playing when the script starts.  Resume will pick everything up where it left
 off.  Random will start each channel in a random spot.  Real-Time will act like
 the script was never shut down, and will play things at the time the EPG said
 they would play.
 
-    Background Updating: The script uses multiple threads to keep channels up-
+- Background Updating: The script uses multiple threads to keep channels up-
 to-date while other channels are playing.  In general, this is fine.  If your
 computer is too slow, though, it may cause stuttering in the video playback.
 This setting allows you to minimize or disable the use of these background
 threads.
 
-    Enable Channel Sharing: Share the same configuration and channel list
+- Enable Channel Sharing: Share the same configuration and channel list
 between multiple computers.  If you're using real-time mode (the default) then
 you can stop watching one show on one computer and pick it up on the other.  Or
 you can have both computers playing the same lists at the same time.
 
-    Shared Channels Folder: If channel sharing is enabled, this is the location
+- Shared Channels Folder: If channel sharing is enabled, this is the location
 available from both computers that will keep the settings and channel infor-
 mation.
 
 
 Visual Settings -
 
-    Info when Changing Channels: Pops up a small window on the bottom of the
+- Info when Changing Channels: Pops up a small window on the bottom of the
 screen where the current show information is displayed when changing channels.
 
-    Always show channel logo: Always display the current channel logo.
+- Always show channel logo: Always display the current channel logo.
 
-    Channel Logo Folder: The place where channel logos are stored.
+- Channel Logo Folder: The place where channel logos are stored.
 
-    Clock Display: Select between a 12-hour or 24-hour clock in the EPG.
+- Clock Display: Select between a 12-hour or 24-hour clock in the EPG.
 
-    Show Coming Up Next box: A little box will notify you of what's coming up
+- Show Coming Up Next box: A little box will notify you of what's coming up
 next when the current show is nearly finished.
 
-    Hide very short videos: Don't show clips shorter than 60 seconds in the
+- Hide very short videos: Don't show clips shorter than 60 seconds in the
 EPG, coming up next box, or info box.  This is helpful if you use bumpers or
 commercials.
-
 
 ------------------
 Credits
@@ -169,7 +156,4 @@ Credits
 
 PseudoTV Live: Lunatixz
 PseudoTV: Jason102
-Code Additions: Sranshaft, TheOddLinguist
-Skins: Sranshaft, Zepfan, Steveb
-Preset Images: Jtucker1972
-Languages: CyberXaz, Machine-Sanctum
+TV Time: Jtucker1972

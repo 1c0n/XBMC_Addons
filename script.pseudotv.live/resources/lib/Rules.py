@@ -27,10 +27,9 @@ from Globals import *
 from Playlist import PlaylistItem
 
 
-
 class RulesList:
     def __init__(self):
-        self.ruleList = [BaseRule(), ScheduleChannelRule(), HandleChannelLogo(), NoShowRule(), DontAddChannel(), EvenShowsRule(), ForceRandom(), ForceRealTime(), ForceResume(), HandleIceLibrary(), HandleBCT(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
+        self.ruleList = [BaseRule(), ScheduleChannelRule(), HandleChannelLogo(), NoShowRule(), DontAddChannel(), EvenShowsRule(), ForceRandom(), ForceRealTime(), ForceResume(), HandleIceLibrary(), HandleBCT(), HandlePOP(), InterleaveChannel(), OnlyUnWatchedRule(), OnlyWatchedRule(), AlwaysPause(), PlayShowInOrder(), RenameRule(), SetResetTime()]
 
 
     def getRuleCount(self):
@@ -986,7 +985,7 @@ class InterleaveChannel(BaseRule):
             minint = 0
             maxint = 0
             startingep = 0
-            numbereps = 0
+            numbereps = 1
             startfrom = 1
             curchan = channelList.runningActionChannel
             curruleid = channelList.runningActionId
@@ -1316,9 +1315,16 @@ class PlayShowInOrder(BaseRule):
 
 class SetResetTime(BaseRule):
     def __init__(self):
-        self.name = "Reset Every x Days"
-        self.optionLabels = ['Number of Days']
-        self.optionValues = ['5']
+        
+        if SETTOP ==  'true':
+            self.name = "Reset Every x Hours"
+            self.optionLabels = ['Number of Hours']
+            self.optionValues = ['1']
+        else:
+            self.name = "Reset Every x Days"
+            self.optionLabels = ['Number of Days']
+            self.optionValues = ['1']
+        
         self.myId = 13
         self.actions = RULES_ACTION_START
 
@@ -1329,10 +1335,16 @@ class SetResetTime(BaseRule):
 
     def getTitle(self):
         if len(self.optionValues[0]) > 0:
-            if self.optionValues[0] == '1':
-                return "Reset Every Day"
+            if SETTOP ==  'true':
+                if self.optionValues[0] == '1':
+                    return "Reset Every Hour"
+                else:
+                    return "Reset Every " + self.optionValues[0] + " Hours"
             else:
-                return "Reset Every " + self.optionValues[0] + " Days"
+                if self.optionValues[0] == '1':
+                    return "Reset Every Day"
+                else:
+                    return "Reset Every " + self.optionValues[0] + " Days"
 
         return self.name
 
@@ -1358,7 +1370,7 @@ class SetResetTime(BaseRule):
                 pass
 
             if numdays <= 0:
-                self.log("Invalid day count: " + str(numdays))
+                self.log("Invalid count: " + str(numdays))
                 return channeldata
 
             rightnow = int(time.time())
@@ -1368,11 +1380,17 @@ class SetResetTime(BaseRule):
                 nextreset = int(ADDON_SETTINGS.getSetting('Channel_' + str(curchan) + '_SetResetTime'))
             except:
                 pass
-
+                
             if rightnow >= nextreset:
                 channeldata.isValid = False
                 ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_changed', 'True')
-                nextreset = rightnow + (60 * 60 * 24 * numdays)
+                
+                if SETTOP ==  'true':
+                    # nextreset = rightnow + (60 * 60 * numdays)
+                    nextreset = rightnow + (60 * numdays)
+                else:
+                    nextreset = rightnow + (60 * 60 * 24 * numdays)
+                    
                 ADDON_SETTINGS.setSetting('Channel_' + str(curchan) + '_SetResetTime', str(nextreset))
 
         return channeldata
@@ -1388,7 +1406,7 @@ class HandleIceLibrary(BaseRule):
         self.actions = RULES_ACTION_START | RULES_ACTION_FINAL_MADE | RULES_ACTION_FINAL_LOADED
         self.selectBoxOptions = [["Yes", "No"]]
 
-
+        
     def copy(self):
         return HandleIceLibrary()
 
@@ -1418,8 +1436,7 @@ class HandleIceLibrary(BaseRule):
             channelList.incIceLibrary = self.storedIceLibValue
 
         return channeldata
-        
-        
+
         
 class HandleBCT(BaseRule):
     def __init__(self):
@@ -1450,7 +1467,7 @@ class HandleBCT(BaseRule):
     def runAction(self, actionid, channelList, channeldata):
         if actionid == RULES_ACTION_START:
             self.storedBCTValue = channelList.incBCTs
-            self.log("Option for IceLibrary is " + self.optionValues[0])
+            self.log("Option for HandleBCT is " + self.optionValues[0])
 
             if self.optionValues[0] == 'Yes':
                 channelList.incBCTs = True
@@ -1461,8 +1478,49 @@ class HandleBCT(BaseRule):
 
         return channeldata
 
+           
+class HandlePOP(BaseRule):
+    def __init__(self):
+        self.name = "Coming up next popup"
+        self.optionLabels = ['Display Coming Up Next']
+        self.optionValues = ['Yes']
+        self.myId = 18
+        self.actions = RULES_ACTION_OVERLAY_SET_CHANNEL | RULES_ACTION_OVERLAY_SET_CHANNEL_END
+        self.selectBoxOptions = [["Yes", "No"]]
 
 
+    def copy(self):
+        return HandlePOP()
+
+
+    def getTitle(self):
+        if self.optionValues[0] == 'Yes':
+            return 'Display Coming Up Next'
+        else:
+            return 'Hide Coming Up Next'
+
+
+    def onAction(self, act, optionindex):
+        self.onActionSelectBox(act, optionindex)
+        return self.optionValues[optionindex]
+
+
+    def runAction(self, actionid, overlay, channeldata):
+        if actionid == RULES_ACTION_OVERLAY_SET_CHANNEL:
+            self.storedPopValue = overlay.showNextItem
+
+            if self.optionValues[0] == 'Yes':
+                overlay.showNextItem = True
+                self.log("setting popup to true")
+            else:
+                overlay.showNextItem = False
+        elif actionid == RULES_ACTION_OVERLAY_SET_CHANNEL_END:
+            overlay.showNextItem = self.storedPopValue
+            self.log("set Coming Up Next to " + str(overlay.showNextItem))
+
+        return channeldata
+       
+        
 class HandleChannelLogo(BaseRule):
     def __init__(self):
         self.name = "Channel Logo"
