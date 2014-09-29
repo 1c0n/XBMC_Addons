@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<settings>
+    <category label="32000">
+        <setting label="32001" type="bool" id="Automatic_Update" default="false" />
+        <setting label="32002" type="enum" id="Automatic_Update_Time" subsetting="true" visible="eq(-1,true)" values="2h|4h|6h|12h|24h|48h|72h" default="0"/>
+        <setting label="32005" type="bool" id="Automatic_Update_Run" subsetting="true" visible="eq(-2,true)" default="true"/>
+        <setting label="32003" type="bool" id="Write_NFOS" default="false" />
+        <setting label="32004" type="folder" id="STRM_LOC" source="auto" default="special://profile/addon_data/script.pseudo.library/STRMS/" />   
+    </category>
+    <!--Community Network-->
+    <category label="30700"> 
+        <setting label="30701" type="bool" id="CN_Enable" default="true" />
+        <setting id="CN_TV" label="30702" type="bool" subsetting="true" visible="eq(-1,true)" default="false" />
+        <setting id="CN_Movies" label="30703" type="bool" subsetting="true" visible="eq(-2,true)" default="false" />
+        <setting id="CN_Episodes" label="30704" type="bool" subsetting="true" visible="eq(-3,true)" default="false" />
+        <setting id="CN_Sports" label="30705" type="bool" subsetting="true" visible="eq(-4,true)" default="false" />
+        <setting id="CN_News" label="30707" type="bool" subsetting="true" visible="eq(-5,true)" default="false" />
+        <setting id="CN_Kids" label="30706" type="bool" subsetting="true" visible="eq(-6,true)" default="false" />
+        <setting id="CN_Music" label="30708" type="bool" subsetting="true" visible="eq(-7,true)" default="false" />
+        <setting id="CN_Other" label="30709" type="bool" subsetting="true" visible="eq(-8,true)" default="false" />
+    </category> 
+    <category label="34000">
+        <setting label="34001" type="text" id="Help" default=""/>
+    </category> 
+</settings>
