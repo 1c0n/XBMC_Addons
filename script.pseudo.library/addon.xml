@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <addon
     id="script.pseudo.library"
-    version="0.0.1"
+    version="0.0.2"
     name="PseudoLibrary"
     provider-name="Lunatixz">
     <requires>

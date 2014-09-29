@@ -17,7 +17,7 @@
 # along with PseudoLibrary.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os, shutil, datetime, random
+import os, datetime
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
 
 from library import *
@@ -26,12 +26,13 @@ SETTINGS_LOC = REAL_SETTINGS.getAddonInfo('profile')
 THUMB = REAL_SETTINGS.getAddonInfo('icon')
 library = library()
 
+
 def CHKSettings():
     print 'CHKSettings'
+    #create missing settings2.xml
     config = xbmc.translatePath(SETTINGS_LOC)
     Settings2 = config + '/settings2.xml'
     if not xbmcvfs.exists(Settings2):
-        #create missing settings2.xml
         try:
             f = open(Settings2, 'w')
             f.write("Genre|Type|Source/Path|Exclusion|Limit|1|Name\n")
@@ -41,24 +42,24 @@ def CHKSettings():
             pass
 
             
-def Update_Timer():
-    print 'Update_Timer'
+def AutomaticUpdate():
+    print 'AutomaticUpdate'
     if REAL_SETTINGS.getSetting('Automatic_Update') == 'true':
-    
         while not xbmc.abortRequested:
+        
             Update = True
             Refresh_INT = [120,240,360,720,1440,2880,4320]
             Update_Refresh = Refresh_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Time'))]
             now  = datetime.datetime.today()
-            # try:
-            Update_Timer_LastRun = REAL_SETTINGS.getSetting('Update_Timer_NextRun')
-            Update_Timer_LastRun = Update_Timer_LastRun.split('.')[0]
-            Update_Timer_LastRun = datetime.datetime.strptime(Update_Timer_LastRun, '%Y-%m-%d %H:%M:%S')
-            Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(minutes=Update_Refresh))
-            # except:
-                # Update_Timer_NextRun = now
-                # REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
-                # pass
+            try:
+                Update_Timer_LastRun = REAL_SETTINGS.getSetting('Update_Timer_NextRun')
+                Update_Timer_LastRun = Update_Timer_LastRun.split('.')[0]
+                Update_Timer_LastRun = datetime.datetime.strptime(Update_Timer_LastRun, '%Y-%m-%d %H:%M:%S')
+                Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(minutes=Update_Refresh))
+            except:
+                Update_Timer_NextRun = now
+                REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
+                pass
                 
             if now >= Update_Timer_NextRun:
                 if REAL_SETTINGS.getSetting('Automatic_Update_Run') == 'false':
@@ -74,4 +75,4 @@ def Update_Timer():
             xbmc.sleep(4000)
             
 CHKSettings()
-Update_Timer()
+AutomaticUpdate()

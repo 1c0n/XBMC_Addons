@@ -16,15 +16,15 @@
 # You should have received a copy of the GNU General Public License
 # along with PseudoLibrary.  If not, see <http://www.gnu.org/licenses/>.
 
-
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
 import httplib, urllib, urllib2, feedparser, socket, json
 import subprocess, os, sys, re
-import time, datetime, threading, _strptime
+import time, datetime
 
 from xml.etree import ElementTree as ET
 from xml.dom.minidom import parse, parseString
 
+# metahandler plugin import
 try:
     from metahandler import metahandlers
 except Exception,e:  
@@ -36,7 +36,7 @@ try:
     import StorageServer
 except Exception,e:
     import storageserverdummy as StorageServer
-
+ 
 # Plugin Info
 ADDON_ID = 'script.pseudo.library'
 REAL_SETTINGS = xbmcaddon.Addon(id=ADDON_ID)
@@ -54,7 +54,6 @@ cache = StorageServer.StorageServer("plugin://script.pseudo.library/" + "cache",
 class library:
 
     def __init__(self):
-        self.settingChannel = '0'
         self.httpJSON = True
         self.discoveredWebServer = False
         self.background = True
@@ -85,27 +84,25 @@ class library:
                 pass
         else:
             #read from list
-            # try:
-            f = open(Settings2, 'r')
-            Settings = f.readlines()
-            f.close
-            
-            for i in range(len(Settings)):
-                lineLST = Settings[i]
-                line = lineLST.split("|")
-                StrmType = line[0]
-                Name = str(line[6]).replace('\n','')
+            try:
+                f = open(Settings2, 'r')
+                Settings = f.readlines()
+                f.close
                 
-                if self.background == False:
-                    self.updateDialog.update(self.updateDialogProgress, "Building Strms", "Parsing Internal List", "adding " + str(Name))
-            # except:
-                # MSG = "No Configurations Found!, Check settings2.xml"
-                # pass
+                for i in range(len(Settings)):
+                    lineLST = Settings[i]
+                    line = lineLST.split("|")
+                    StrmType = line[0]
+                    Name = str(line[6]).replace('\n','')
+                    
+                    if self.background == False:
+                        self.updateDialog.update(self.updateDialogProgress, "Building Strms", "Parsing Internal List", "adding " + str(Name))
+            except:
+                MSG = "No Configurations Found!, Check settings2.xml"
+                pass
 
         if MSG:
             xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", MSG, 4000, THUMB) )
-            
-        print Settings
             
         if REAL_SETTINGS.getSetting('CN_Enable') == 'true': 
             #parse external list
@@ -113,6 +110,7 @@ class library:
             url = 'https://pseudotv-live-community.googlecode.com/svn/addons.xml'
             url1 = 'https://pseudotv-live-community.googlecode.com/svn/playon.xml'
             
+            #create genre_filter list
             if REAL_SETTINGS.getSetting("CN_TV") == "true":
                 genre_filter.append('TV') 
             if REAL_SETTINGS.getSetting("CN_Movies") == "true":
@@ -130,51 +128,47 @@ class library:
             if REAL_SETTINGS.getSetting("CN_Other") == "true":
                 genre_filter.append('Other') 
                     
-            data = self.OpenURL(url)
-            data1 = self.OpenURL(url1)
+            data = self.OpenURL(url) #pluging
+            data1 = self.OpenURL(url1) #playon
             data = data + data1
             data = data[2:] #remove first two unwanted lines
             data = ([x for x in data if x != '']) #remove empty lines    
                 
-            # try:
-            for i in range(len(data)):
-                lineLST = data[i]
-                line = lineLST.split("|")
-                StrmType = line[0]
-                Name = line[5]
-                
-                #append wanted items by genre
-                if StrmType in genre_filter:
-                    Settings.append(lineLST)
-                
-                    if self.background == False:
-                        self.updateDialog.update(self.updateDialogProgress, "Building Strms", "Parsing External List", "adding " + str(Name))
-            # except:
-                # pass
-                
-        print Settings
+            try:
+                for i in range(len(data)):
+                    lineLST = data[i]
+                    line = lineLST.split("|")
+                    Genre = line[0]
+                    Name = line[5]
+                    
+                    #append wanted items by genre
+                    if Genre in genre_filter:
+                        Settings.append(lineLST)
+                    
+                        if self.background == False:
+                            self.updateDialog.update(self.updateDialogProgress, "Building Strms", "Parsing External List", "adding " + str(Name))
+            except:
+                pass
 
-        # try:
-        for n in range(len(Settings)):
-            line = ((Settings[n]).replace('\n','').replace('""',"")).split('|')
-            StrmType = line[0]
-            BuildType = line[1]
-            setting1 = line[2]
-            setting2 = line[3]
-            setting3 = line[4]
-            setting4 = line[5]
-            FolderName = line[6]
-            
-            if BuildType.lower() == 'plugin' or BuildType == '15':
-                self.BuildPluginFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
-            elif BuildType.lower() == 'playon' or BuildType == '16':
-                self.BuildPlayonFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
-            elif BuildType.lower() == 'upnp':
-                print StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName
-            elif BuildType.lower() == 'youtube':
-                print StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName
-        # except:
-            # pass
+        try:
+            for n in range(len(Settings)):
+                line = ((Settings[n]).replace('\n','').replace('""',"")).split('|')
+                StrmType = line[0]
+                BuildType = line[1]
+                setting1 = line[2]
+                setting2 = line[3]
+                setting3 = line[4]
+                setting4 = line[5]
+                FolderName = line[6]
+                
+                if BuildType.lower() == 'plugin' or BuildType == '15':
+                    self.BuildPluginFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
+                elif BuildType.lower() == 'playon' or BuildType.lower() == 'upnp' or BuildType == '16':
+                    self.BuildPlayonFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
+                elif BuildType.lower() == 'youtube':
+                    print StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName
+        except:
+            pass
 
             
     def BuildPluginFileList(self, StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName):
@@ -350,12 +344,9 @@ class library:
     def WriteSTRM(self, fileList, StrmType, BuildType, PluginName, DirName):
         print 'WriteSTRM'
         print fileList, StrmType, BuildType, PluginName, DirName
+        WriteNFO = False
         STRM_LOC = REAL_SETTINGS.getSetting('STRM_LOC')
-        
-        if REAL_SETTINGS.getSetting('Write_NFOS') == 'true': 
-            WriteNFO = True
-        else:
-            WriteNFO = False
+        WriteNFO = REAL_SETTINGS.getSetting("Write_NFOS") == "true"
 
         for i in range(len(fileList)):
             tmpstrLST = (fileList[i]).split('\n')[0]
@@ -375,44 +366,30 @@ class library:
                 StrmType = 'TVShows'
                 FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
                 FleName = "".join(i for i in FleName if i not in "\/:*?<>|")
-
                 Folder = os.path.join(STRM_LOC,StrmType)
                 FleFolder = os.path.join(Folder,DirName)
-                Fle = FleFolder + '/' + FleName
                 
             elif StrmType.lower() == 'movie' or StrmType.lower() == 'movies':
                 StrmType = 'Movies'
-                FleName = (title + '.strm').replace(":",",")
+                FleName = (title + '.strm').replace(":"," - ")
                 FleName = "".join(i for i in FleName if i not in "\/:*?<>|")
-
                 Folder = os.path.join(STRM_LOC,StrmType)
                 FleFolder = os.path.join(Folder,title.replace(":"," - ").replace("*","").replace("|",''))
-                Fle = FleFolder + '/' + FleName
                 
             else:
                 StrmType = 'Generic'
-                FleName = (title + ' - ' + eptitle + '.strm').replace(":",",")
+                FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
                 FleName = "".join(i for i in FleName if i not in "\/:*?<>|")
-
                 Folder = os.path.join(STRM_LOC,StrmType)
                 FleFolder = os.path.join(Folder,PluginName,DirName)
-                Fle = FleFolder + '/' + FleName
-                
             
-            type = liveID[0]
+            Fle = FleFolder + '/' + FleName
             
             try:
                 id = liveID[1]
             except:
-                id = ['tvshow','0','0','False','1','NR','']
                 pass
             
-            try:
-                rating = liveID[5]
-            except:
-                rating = 'NA'
-                pass
-
             if not xbmcvfs.exists(FleFolder):
                 xbmcvfs.delete(FleFolder)
                 xbmcvfs.mkdirs(FleFolder)
@@ -431,6 +408,9 @@ class library:
                 
             print Fle, file
 
+            #WriteNFO
+            
+            
     #return plugin query, not tmpstr
     def PluginQuery(self, path): 
         self.log("PluginQuery") 

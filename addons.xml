@@ -29,7 +29,7 @@
 
 <addon
     id="script.pseudo.library"
-    version="0.0.1"
+    version="0.0.2"
     name="PseudoLibrary"
     provider-name="Lunatixz">
     <requires>
