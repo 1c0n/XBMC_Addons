@@ -23,7 +23,9 @@ from library import *
 
 dlg = xbmcgui.Dialog()
 library = library()
-SETTINGS_LOC = REAL_SETTINGS.getAddonInfo('profile')
 
 if dlg.yesno("PseudoLibrary", "Generate Strm's ?"):
-    library.readSettings(SETTINGS_LOC, False)
+    SETTINGS_LOC = REAL_SETTINGS.getAddonInfo('profile')
+    if REAL_SETTINGS.getSetting('SanityCheck') == 'false':
+        library.readSettings(SETTINGS_LOC, False)
+    REAL_SETTINGS.setSetting("SanityCheck","false")

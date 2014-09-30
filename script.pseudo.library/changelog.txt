@@ -1,0 +1,6 @@
+#.0.0.1
+Init
+#.0.0.2
+Automatic Service
+#.0.0.3
+Improved Parsing, Strm filenames
