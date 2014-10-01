@@ -354,8 +354,10 @@ class library:
         WriteNFO = False
         STRM_LOC = REAL_SETTINGS.getSetting('STRM_LOC')
         WriteNFO = REAL_SETTINGS.getSetting("Write_NFOS") == "true"
-
-        tmpstr = (tmpstr.replace('\n','')).split('//')
+            
+        tmpstrLST = tmpstr.split('\n')[0]
+        file = tmpstr.split('\n')[1]
+        tmpstr = tmpstrLST.split('//')
         dur = tmpstr[0].split(',')[0]
         title = tmpstr[0].split(',')[1]
         eptitle = tmpstr[1]
@@ -386,7 +388,7 @@ class library:
             Folder = os.path.join(STRM_LOC,StrmType)
             FleFolder = os.path.join(Folder,PluginName,DirName)
         
-        Fle = FleFolder + '/' + FleName
+        Fle = os.path.join(FleFolder,FleName)
         # print StrmType, FleName, Folder, FleFolder, Fle
 
         try:

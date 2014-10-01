@@ -4,3 +4,5 @@ Init
 Automatic Service
 #.0.0.3
 Improved Parsing, Strm filenames
+#.0.0.4
+Fixed Missing Link in Strms
