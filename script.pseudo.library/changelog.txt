@@ -6,3 +6,6 @@ Automatic Service
 Improved Parsing, Strm filenames
 #.0.0.4
 Fixed Missing Link in Strms
+#.0.0.5
+Misc changes, including configuration changes.
+Added Youtube channel, playlist and multitube.

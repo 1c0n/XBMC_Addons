@@ -6,7 +6,7 @@
         <setting label="32006" type="enum" id="Automatic_Update_Delay" subsetting="true" visible="eq(-2,true)" values="0|5s|10s|15s|20s"  default="1"/>
         <setting label="32005" type="bool" id="Automatic_Update_Run" subsetting="true" visible="eq(-3,true)" default="true"/>
         <setting label="32003" type="bool" id="Write_NFOS" default="false" />
-        <setting label="32004" type="folder" id="STRM_LOC" source="auto" default="special://profile/addon_data/script.pseudo.library/STRMS/" />   
+        <setting label="32004" type="folder" id="STRM_LOC" source="auto" default="" />   
     </category>
     <!--Community Network-->
     <category label="30700"> 

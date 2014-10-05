@@ -56,34 +56,33 @@ def AutomaticUpdate():
             Update = True
             Refresh_INT = [2,4,6,12,24,48,72]#Minutes 2h,4h,6h,12h,24h,48h,72h
             Update_Refresh = Refresh_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Time'))]
-            now  = datetime.datetime.today()
+            now = datetime.datetime.today()
+            
             try:
                 Update_Timer_LastRun = REAL_SETTINGS.getSetting('Update_Timer_NextRun')
                 Update_Timer_LastRun = Update_Timer_LastRun.split('.')[0]
                 Update_Timer_LastRun = datetime.datetime.strptime(Update_Timer_LastRun, '%Y-%m-%d %H:%M:%S')
-                Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(hours=Update_Refresh))
-                print 'AutomaticUpdate, LastRun = ' + str(Update_Timer_LastRun) + ' NextRun = ' + str(Update_Timer_NextRun) + ' Update Interval = ' + str(Update_Refresh)
             except:
-                Update_Timer_NextRun = now
-                REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
+                Update_Timer_LastRun = now
                 pass
                 
-            if now >= Update_Timer_NextRun:
+            if now >= Update_Timer_LastRun:
                 if REAL_SETTINGS.getSetting('Automatic_Update_Run') == 'false':
                     if xbmc.Player().isPlaying():
                         Update = False
 
                 if Update == True:
-                    xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Started", 4000, THUMB) )
+                    xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Starting", 4000, THUMB) )
+                    
                     if REAL_SETTINGS.getSetting('SanityCheck') == 'false':
+                        Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(hours=Update_Refresh))
                         library.readSettings(SETTINGS_LOC, True)
-                    REAL_SETTINGS.setSetting("SanityCheck","false")
-                    REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
-                    xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Complete", 4000, THUMB) )
+                        REAL_SETTINGS.setSetting("SanityCheck","false")
+                        REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
+                        xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Complete", 4000, THUMB) )
 
             xbmc.sleep(4000)
         
-    
-REAL_SETTINGS.setSetting("SanityCheck","false")    
+REAL_SETTINGS.setSetting("SanityCheck","false")  
 CHKSettings()
 AutomaticUpdate()
