@@ -17,7 +17,7 @@
 # along with PseudoLibrary.  If not, see <http://www.gnu.org/licenses/>.
 
 
-import os, datetime, _strptime 
+import os, datetime, _strptime, shutil
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
 
 from library import *
@@ -46,42 +46,47 @@ def CHKSettings():
             
 def AutomaticUpdate():
     print 'AutomaticUpdate'
-    if REAL_SETTINGS.getSetting('Automatic_Update') == 'true':
-        Delay_INT = [2,4,6,12,24,48,72]#Minutes 2h,4h,6h,12h,24h,48h,72h
-        Update_Delay = Delay_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Delay'))]
-        sleep(Update_Delay)
-        
-        while not xbmc.abortRequested:
-        
-            Update = True
-            Refresh_INT = [2,4,6,12,24,48,72]#Minutes 2h,4h,6h,12h,24h,48h,72h
-            Update_Refresh = Refresh_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Time'))]
+    Delay_INT = [0,5,10,15,20]
+    Update_Delay = Delay_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Delay'))]
+    sleep(Update_Delay)
+    
+    while not xbmc.abortRequested:
+
+        if REAL_SETTINGS.getSetting('Automatic_Update') == 'true':
             now = datetime.datetime.today()
-            
-            try:
-                Update_Timer_LastRun = REAL_SETTINGS.getSetting('Update_Timer_NextRun')
-                Update_Timer_LastRun = Update_Timer_LastRun.split('.')[0]
-                Update_Timer_LastRun = datetime.datetime.strptime(Update_Timer_LastRun, '%Y-%m-%d %H:%M:%S')
-            except:
-                Update_Timer_LastRun = now
-                pass
+            Refresh_INT = [2,4,6,12,24,48,72]
+            Update_Refresh = Refresh_INT[int(REAL_SETTINGS.getSetting('Automatic_Update_Time'))]
+
+            # try:
+            Update_Timer_LastRun = REAL_SETTINGS.getSetting('Update_Timer_NextRun')
+            Update_Timer_LastRun = Update_Timer_LastRun.split('.')[0]
+            Update_Timer_LastRun = datetime.datetime.strptime(Update_Timer_LastRun, '%Y-%m-%d %H:%M:%S')
+            # except:
+                # Update_Timer_LastRun = now
+                # pass
                 
             if now >= Update_Timer_LastRun:
+                Update = True
                 if REAL_SETTINGS.getSetting('Automatic_Update_Run') == 'false':
                     if xbmc.Player().isPlaying():
                         Update = False
 
                 if Update == True:
-                    xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Starting", 4000, THUMB) )
-                    
                     if REAL_SETTINGS.getSetting('SanityCheck') == 'false':
-                        Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(hours=Update_Refresh))
+                        xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Starting", 4000, THUMB) )
+
+                        # Clear Folder
+                        if REAL_SETTINGS.getSetting("Automatic_Clear_Folder") == "true":
+                            REAL_SETTINGS.setSetting("Clear_Folder","true")
+                        
                         library.readSettings(SETTINGS_LOC, True)
-                        REAL_SETTINGS.setSetting("SanityCheck","false")
+                        Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(hours=Update_Refresh))
+                        print 'Update_Timer_LastRun', now
+                        print 'Update_Timer_NextRun', Update_Timer_NextRun
                         REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
                         xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Complete", 4000, THUMB) )
 
-            xbmc.sleep(4000)
+        xbmc.sleep(4000)
         
 REAL_SETTINGS.setSetting("SanityCheck","false")  
 CHKSettings()

@@ -9,3 +9,9 @@ Fixed Missing Link in Strms
 #.0.0.5
 Misc changes, including configuration changes.
 Added Youtube channel, playlist and multitube.
+#.0.0.6
+Youtube Sort? Place Youtube into it's own folder.
+Clear Strm Folder (Purge all files and folders).
+Service Loop fix!
+New plugin detection
+Music type

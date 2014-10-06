@@ -2,10 +2,12 @@
 <settings>
     <category label="32000">
         <setting label="32001" type="bool" id="Automatic_Update" default="false" />
-        <setting label="32002" type="enum" id="Automatic_Update_Time" subsetting="true" visible="eq(-1,true)" values="2h|4h|6h|12h|24h|48h|72h" default="0"/>
-        <setting label="32006" type="enum" id="Automatic_Update_Delay" subsetting="true" visible="eq(-2,true)" values="0|5s|10s|15s|20s"  default="1"/>
+        <setting label="32002" type="enum" id="Automatic_Update_Time" subsetting="true" visible="eq(-1,true)" values="2|4|6|12|24|48|72" default="0"/>
+        <setting label="32006" type="enum" id="Automatic_Update_Delay" subsetting="true" visible="eq(-2,true)" values="0|5|10|15|20"  default="1"/>
         <setting label="32005" type="bool" id="Automatic_Update_Run" subsetting="true" visible="eq(-3,true)" default="true"/>
+        <setting label="34008" type="bool" id="Automatic_Clear_Folder" subsetting="true" visible="eq(-4,true)" default="false"/>
         <setting label="32003" type="bool" id="Write_NFOS" default="false" />
+        <setting label="32007" type="bool" id="Youtube_Sort" default="false" />
         <setting label="32004" type="folder" id="STRM_LOC" source="auto" default="" />   
     </category>
     <!--Community Network-->
@@ -22,5 +24,6 @@
     </category> 
     <category label="34000">
         <setting label="34001" type="text" id="Help" default=""/>
+        <setting label="34002" type="bool" id="Clear_Folder" default="false"/>
     </category> 
 </settings>

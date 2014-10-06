@@ -18,7 +18,7 @@
 
 import xbmc, xbmcgui, xbmcaddon, xbmcvfs
 import httplib, urllib, urllib2, feedparser, socket, json
-import subprocess, os, sys, re
+import subprocess, os, sys, re, shutil
 import time, datetime
 
 from urllib2 import unquote
@@ -57,22 +57,34 @@ class library:
         self.httpJSON = True
         self.discoveredWebServer = False
         self.background = True
+        self.addonLST = []
         THUMB = REAL_SETTINGS.getAddonInfo('icon')
         
         if not REAL_SETTINGS.getSetting("STRM_LOC"):
             Default_LOC = os.path.join(profile,'Strms')
             REAL_SETTINGS.setSetting("STRM_LOC",Default_LOC)
+
             
     def readSettings(self, config, background):
         print 'readSettings'
         REAL_SETTINGS.setSetting("SanityCheck","true")
         MSG = ''
         config = xbmc.translatePath(config)
+        STRM_LOC = REAL_SETTINGS.getSetting('STRM_LOC')
         Settings2 = os.path.join(config,'settings2.xml')
         print config, Settings2
         self.background = background
         self.updateCount = 0
         
+        # Clear Folder
+        if REAL_SETTINGS.getSetting("Clear_Folder") == "true":
+            try:
+                shutil.rmtree(STRM_LOC)
+                REAL_SETTINGS.setSetting("Clear_Folder","false")
+                xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Strm Folder Cleared", 4000, THUMB) )
+            except Exception,e:
+                pass
+
         if self.background == False:
             self.updateDialog = xbmcgui.DialogProgress()
             self.updateDialogProgress = 0
@@ -185,6 +197,8 @@ class library:
         except:
             pass
 
+        REAL_SETTINGS.setSetting("SanityCheck","false")
+        
             
     def BuildPluginFileList(self, StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName):
         print "BuildPluginFileList"
@@ -268,11 +282,11 @@ class library:
                     
         
             
-        #all directories found, walk final folder
-        if len(Directs) == 0:
-            print "BuildPluginFileList, Final folder found walk root"
-            # print plugin, excludeLST, limit, StrmType, BuildType, 'video', FolderName
-            self.PluginWalk(plugin, excludeLST, limit, StrmType, BuildType, 'video', FolderName, LastName)
+            #all directories found, walk final folder
+            if len(Directs) == 0:
+                print "BuildPluginFileList, Final folder found walk root"
+                # print plugin, excludeLST, limit, StrmType, BuildType, 'video', FolderName
+                self.PluginWalk(plugin, excludeLST, limit, StrmType, BuildType, 'video', FolderName, LastName)
                     
                     
     def BuildPlayonFileList(self, StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName):
@@ -633,7 +647,7 @@ class library:
                                         theplot = (theplot[:350])
 
                                     #remove // because interferes with playlist split.
-                                    theplot = theplot.replace('//', ' ')
+                                    theplot = self.CleanLabels(theplot)
 
                                     # This is a TV show
                                     if (episodes != None and episodes.group(1) != '-1') and showtitles != None and len(showtitles.group(1)) > 0:
@@ -722,11 +736,13 @@ class library:
 
                                         if labels:
                                             label = (labels.group(1))
-
+                                            label = self.CleanLabels(label)
+                                            
                                         if titles:
                                             title = (titles.group(1))
-
-                                        tmpstr += (label).replace('\\','') + "//"
+                                            title = self.CleanLabels(title)
+                                            
+                                        tmpstr += label + "//"
 
                                         album = re.search('"album" *: *"(.*?)"', f)
 
@@ -735,9 +751,11 @@ class library:
                                             taglines = re.search('"tagline" *: *"(.*?)"', f)
 
                                             if taglines != None and len(taglines.group(1)) > 0:
-                                                tmpstr += (taglines.group(1)).replace('\\','')
+                                                tagline = (taglines.group(1))
+                                                tagline = self.CleanLabels(tagline)
+                                                tmpstr += tagline
                                             else:
-                                                tmpstr += 'PluginTV'
+                                                tmpstr += ''
 
                                             # if PlugCHK in DYNAMIC_PLUGIN_MOVIE:
                                                 # print 'DYNAMIC_PLUGIN_MOVIE'
@@ -994,13 +1012,22 @@ class library:
             self.log("plugin id = " + addon)
         else:
             addon = plugin
-        try:
-            addon_ok = xbmcaddon.Addon(id=addon)
-            if addon_ok:
-               self.PluginFound = True
-        except:
-            self.PluginFound = False
+            
+        print 'addon', addon        
         
+        json_query = ('{"jsonrpc": "2.0", "method": "Addons.GetAddons", "params": {}, "id": 1}')
+        json_folder_detail = self.sendJSON(json_query)
+        file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
+                
+        for f in (file_detail):
+            addonids = re.search('"addonid" *: *"(.*?)",', f)
+            if addonids:
+                addonid = addonids.group(1)
+                if addonid.lower() == addon.lower():
+                    print addonid
+                    self.PluginFound = True
+                    self.Pluginvalid = True
+                    
         print ("PluginFound = " + str(self.PluginFound))
         
         return self.PluginFound
@@ -1479,8 +1506,8 @@ class library:
                             summary = (summary[:350])
 
                         #remove // because interferes with playlist split.
-                        summary = summary.replace('//', ' ')
-                            
+                        summary = self.CleanLabels(summary)
+                        
                         try:
                             runtime = feed.entries[i].yt_duration['seconds']
                             print ('createYoutubeFilelist, runtime = ' + str(runtime))
@@ -1529,7 +1556,7 @@ class library:
             
     def CleanLabels(self, label):
         print 'CleanLabels'
-        label = label.replace('[B]','').replace('[/B]','').replace('[/COLOR]','').replace('[COLOR=blue]','').replace('[COLOR=red]','').replace('[COLOR=green]','').replace('[COLOR=yellow]','').replace(' [HD]', '').replace('(Sub) ','').replace('(Dub) ','').replace(' [cc]','')
+        label = label.replace('[B]','').replace('[/B]','').replace('[/COLOR]','').replace('[COLOR=blue]','').replace('[COLOR=cyan]','').replace('[COLOR=red]','').replace('[COLOR=green]','').replace('[COLOR=yellow]','').replace(' [HD]', '').replace('(Sub) ','').replace('(Dub) ','').replace(' [cc]','').replace('\\',' ')
         return label
         
     
@@ -1587,19 +1614,41 @@ class library:
                 FleFolder = os.path.join(Folder,title)
             else:
                 FleFolder = os.path.join(Folder,DirName)
+                
+        elif StrmType.lower() == 'music video' or StrmType.lower() == 'music videos' or StrmType.lower() == 'music':
+            StrmType = 'Music'
+            FleName = (title + '.strm').replace(":"," - ")
+            FleName = re.sub('[\/:*?<>|!@#$/:]', '', FleName)
+            title = re.sub('[\/:*?<>|!@#$/:]', '', title)
+            Folder = os.path.join(STRM_LOC,StrmType)
+            
+            if DirName == '':
+                FleFolder = os.path.join(Folder)
+            else:
+                FleFolder = os.path.join(Folder,DirName)
 
         else:
             StrmType = 'Generic'
+            
             if BuildType.lower() == 'youtube':
-                FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
-                FleName = re.sub('[\/:*?<>|!@#$/:]', '', FleName)
-                Folder = os.path.join(STRM_LOC,BuildType)
-                
-                if DirName == '':
-                    FleFolder = os.path.join(Folder,PluginName,LastName)
+                if REAL_SETTINGS.getSetting('Youtube_Sort') == 'true':
+                    FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
+                    FleName = re.sub('[\/:*?<>|!@#$/:]', '', FleName)
+                    Folder = os.path.join(STRM_LOC,BuildType)
+                    
+                    if DirName == '':
+                        FleFolder = os.path.join(Folder,PluginName,LastName)
+                    else:
+                        FleFolder = os.path.join(Folder,PluginName,DirName)
                 else:
-                    FleFolder = os.path.join(Folder,PluginName,DirName)
-
+                    FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
+                    FleName = re.sub('[\/:*?<>|!@#$/:]', '', FleName)
+                    Folder = os.path.join(STRM_LOC,StrmType)
+                    
+                    if DirName == '':
+                        FleFolder = os.path.join(Folder,BuildType,LastName)
+                    else:
+                        FleFolder = os.path.join(Folder,BuildType,DirName) 
             else:
                 FleName = (title + ' - ' + eptitle + '.strm').replace(":"," - ")
                 FleName = re.sub('[\/:*?<>|!@#$/:]', '', FleName)
