@@ -15,3 +15,7 @@ Clear Strm Folder (Purge all files and folders).
 Service Loop fix!
 New plugin detection
 Music type
+#.0.0.7
+Library Scan and Clean options.
+Service tweaks
+SMB/NFS folder paths allowed.
