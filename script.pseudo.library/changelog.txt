@@ -19,3 +19,5 @@ Music type
 Library Scan and Clean options.
 Service tweaks
 SMB/NFS folder paths allowed.
+#.0.0.8
+Service Fix

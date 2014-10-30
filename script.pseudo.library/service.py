@@ -92,7 +92,7 @@ def AutomaticUpdate():
                         REAL_SETTINGS.setSetting("Clear_Folder","true")
                     
                     library.readSettings(SETTINGS_LOC, True)
-                    Update_Timer_NextRun = (Update_Timer_LastRun + datetime.timedelta(hours=Update_Refresh))
+                    Update_Timer_NextRun = (Update_Timer_NextRun + datetime.timedelta(hours=Update_Refresh))
                     REAL_SETTINGS.setSetting("Update_Timer_NextRun",str(Update_Timer_NextRun))
                     xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", "Background Service Complete", 4000, THUMB) )
 

@@ -29,7 +29,7 @@
 
 <addon
     id="script.pseudo.library"
-    version="0.0.7"
+    version="0.0.8"
     name="PseudoLibrary"
     provider-name="Lunatixz">
     <requires>
@@ -51,7 +51,7 @@
         <platform>all</platform>
         <minversion>35647</minversion>
         <summary lang="en">Virtual Library Strm Generator</summary>
-        <description lang="en">Generate Strms from your favourite plugins and upnp sources.</description>
+        <description lang="en">Generate Strms from Youtube, plugins and upnp sources.</description>
     </extension>
 </addon>
 

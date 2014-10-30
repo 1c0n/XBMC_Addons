@@ -1592,6 +1592,8 @@ class library:
         genre = tmpstr[3]
         GenreLiveID = tmpstr[5]
         liveID = self.unpackLiveID(GenreLiveID)
+        DirName = re.sub('[\/:*?<>|!@#$/:]', '', DirName)
+        LastName = re.sub('[\/:*?<>|!@#$/:]', '', LastName)
         # print dur, title, eptitle, description, genre, GenreLiveID, liveID
 
         if StrmType.lower() == 'tvshow' or StrmType.lower() == 'tvshows' or StrmType.lower() == 'tv':
