@@ -24,6 +24,7 @@ import time, datetime
 from urllib2 import unquote
 from xml.etree import ElementTree as ET
 from xml.dom.minidom import parse, parseString
+from FileAccess import FileAccess
 
 # metahandler plugin import
 try:
@@ -50,6 +51,9 @@ xbmc.log(ADDON_ID +' '+ ADDON_NAME +' '+ ADDON_PATH +' '+ ADDON_VERSION)
 # Globals
 cache = StorageServer.StorageServer("plugin://script.pseudo.library/" + "cache",1)
 THUMB = REAL_SETTINGS.getAddonInfo('icon')
+dlg = xbmcgui.Dialog()
+Delay_INT = [0,5,10,15,20]
+Refresh_INT = [2,4,6,12,24,48,72]
 
 class library:
 
@@ -58,23 +62,25 @@ class library:
         self.discoveredWebServer = False
         self.background = True
         self.addonLST = []
-        THUMB = REAL_SETTINGS.getAddonInfo('icon')
         
         if not REAL_SETTINGS.getSetting("STRM_LOC"):
+            #Set Default Strm Location
             Default_LOC = os.path.join(profile,'Strms')
+            #Set RealSetting Default STRM Location
             REAL_SETTINGS.setSetting("STRM_LOC",Default_LOC)
 
             
     def readSettings(self, config, background):
-        print 'readSettings'
+        print 'PseudoLibrary - readSettings'
+        #Check if readSettings already running (Service)
         REAL_SETTINGS.setSetting("SanityCheck","true")
         MSG = ''
         config = xbmc.translatePath(config)
         STRM_LOC = REAL_SETTINGS.getSetting('STRM_LOC')
         Settings2 = os.path.join(config,'settings2.xml')
-        print config, Settings2
+        print 'PseudoLibrary - ' + Settings2
+        #Enable XBMC Dialogue or null?
         self.background = background
-        self.updateCount = 0
         
         # Clear Folder
         if REAL_SETTINGS.getSetting("Clear_Folder") == "true":
@@ -88,30 +94,31 @@ class library:
         if self.background == False:
             self.updateDialog = xbmcgui.DialogProgress()
             self.updateDialogProgress = 0
+            self.updateDialogProgressCount = 0
             self.updateDialog.create("PseudoLibrary", "Initializing")
             self.updateDialog.update(0, "Initializing")
         
         #parse internal list
         if not xbmcvfs.exists(Settings2):
-            print 'readSettings, creating settings2'
+            print 'PseudoLibrary - readSettings, creating settings2'
+            
             #create settings2.xml
             try:
-                f = open(Settings2, 'w')
-                f.write("Genre|Type|Source|Exclusion|Limit|NA|Name\n")
+                f = open(Settings2, "w")
+                f.write("Genre|Type|Source|Exclusion,Exclusion|Limit|ALTSwitch|Name|Rules\n")
                 f.close
             except:
                 MSG = "No Configuration File Found!, Check settings2.xml"
                 pass
         else:
             #read from list
-            print 'readSettings, reading settings2'
+            print 'PseudoLibrary - readSettings, reading settings2'
             
             try:
                 f = open(Settings2, 'r')
                 Settings = f.readlines()
                 f.close
 
-                self.updateDialogProgress = 1
                 if self.background == False:
                     self.updateDialog.update(self.updateDialogProgress, "Reading Configurations", "Parsing Internal List", "")
                 
@@ -128,13 +135,12 @@ class library:
             xbmc.executebuiltin("Notification( %s, %s, %d, %s)" % ("PseudoLibrary", MSG, 4000, THUMB) )
             
         if REAL_SETTINGS.getSetting('CN_Enable') == 'true': 
-            print 'readSettings, Recommended List Enabled'
+            print 'PseudoLibrary - readSettings, Recommended List Enabled'
             #parse external list
             genre_filter = []
             url = 'https://pseudotv-live-community.googlecode.com/svn/addons.xml'
             url1 = 'https://pseudotv-live-community.googlecode.com/svn/playon.xml'
             
-            self.updateDialogProgress = 2
             if self.background == False:
                 self.updateDialog.update(self.updateDialogProgress, "Reading Configurations", "Parsing Internal List", "")
                 
@@ -179,16 +185,16 @@ class library:
             for n in range(len(Settings)):
                 line = ((Settings[n]).replace('\n','').replace('""',"")).split('|')
                 StrmType = line[0]
-                BuildType = line[1]
+                BuildType = (line[1]).replace('15','Plugin').replace('16','Playon')
                 setting1 = (line[2]).replace('plugin://','').replace('upnp://','')
-                setting2 = line[3]
+                setting2 = (line[3]).replace('plugin://','')
                 setting3 = line[4]
                 setting4 = line[5]
                 FolderName = line[6]
-                if BuildType.lower() == 'plugin' or BuildType == '15':
+                if BuildType.lower() == 'plugin':
                     setting1 = 'plugin://' + setting1
                     self.BuildPluginFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
-                elif BuildType.lower() == 'playon' or BuildType.lower() == 'upnp' or BuildType == '16':
+                elif BuildType.lower() == 'playon' or BuildType.lower() == 'upnp':
                     self.BuildPlayonFileList(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName)
                 elif BuildType.lower() == 'youtube':
                     self.createYoutubeFilelist(StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName) 
@@ -199,6 +205,16 @@ class library:
 
         REAL_SETTINGS.setSetting("SanityCheck","false")
         
+        if REAL_SETTINGS.getSetting("Automatic_Update_Folder") == "true":
+            xbmc.executebuiltin("UpdateLibrary(video,[%s])" % (STRM_LOC))
+            # http://localhost:8080/jsonrpc?request={"jsonrpc":"2.0","method":"VideoLibrary.Scan","params":{"directory":"strmloc"},"id":3}
+            
+        if REAL_SETTINGS.getSetting("Automatic_Clean_Folder") == "true":
+            xbmc.executebuiltin("CleanLibrary(video)")
+            # http://localhost:8080/jsonrpc?request={"jsonrpc":"2.0","method":"VideoLibrary.Clean","params":{},"id":2}
+
+        self.updateDialogProgress = 100
+        
             
     def BuildPluginFileList(self, StrmType, BuildType, setting1, setting2, setting3, setting4, FolderName):
         print "BuildPluginFileList"
@@ -207,6 +223,7 @@ class library:
         DetailLST_CHK = []
         self.dircount = 0
         self.filecount = 0
+        # self.updateDialogProgressCount = self.updateDialogProgressCount + self.filecount + self.dircount
         limit = int(setting3)
         Pluginvalid = self.plugin_ok(setting1)
         
@@ -253,8 +270,8 @@ class library:
                     Match = False
 
                 try:
-                    for i in range(len(DetailLST)):         
-                        self.updateDialogProgress = self.updateDialogProgress + (i * 1) // 100
+                    for i in range(len(DetailLST)):   
+                        # self.updateDialogProgress = i * 1 // self.updateDialogProgressCount
                         Detail = (DetailLST[i]).split(',')
                         filetype = Detail[0]
                         title = Detail[1]
@@ -270,7 +287,7 @@ class library:
                             if filetype == 'directory':
                                 CurDirect = self.CleanLabels(Directs[0])
                                 if CurDirect.lower() == title.lower():
-                                    print 'directory match'
+                                    print 'PseudoLibrary - directory match'
                                     LastName = CurDirect
                                     Directs.pop(0) #remove old directory, search next element
                                     plugin = file
@@ -296,6 +313,7 @@ class library:
         DetailLST_CHK = []
         self.dircount = 0
         self.filecount = 0
+        # self.updateDialogProgressCount = self.updateDialogProgressCount + self.filecount + self.dircount
         limit = int(setting3)
         upnpID = self.playon_player()
 
@@ -341,7 +359,7 @@ class library:
                 
                 try:
                     for i in range(len(DetailLST)):
-                        self.updateDialogProgress = self.updateDialogProgress + (i * 1) // 100
+                        # self.updateDialogProgress = i * 1 // self.updateDialogProgressCount
                         Detail = (DetailLST[i]).split(',')
                         filetype = Detail[0]
                         title = Detail[1]
@@ -357,13 +375,13 @@ class library:
                             if filetype == 'directory':
                                 CurDirect = self.CleanLabels(Directs[0])
                                 if CurDirect.lower() == title.lower():
-                                    print 'directory match'
+                                    print 'PseudoLibrary - directory match'
                                     LastName = CurDirect
                                     Directs.pop(0) #remove old directory, search next element
                                     upnpID = file
                                     break
                 except:
-                    print 'BuildPlayonFileList, DetailLST Empty'
+                    print 'PseudoLibrary - BuildPlayonFileList, DetailLST Empty'
                     LastName = FolderName
                     pass
 
@@ -386,7 +404,7 @@ class library:
     
     #Parse Plugin, return essential information. Not tmpstr
     def PluginInfo(self, path):
-        print 'PluginInfo'
+        print 'PseudoLibrary - PluginInfo'
         json_query = self.uni('{"jsonrpc":"2.0","method":"Files.GetDirectory","params":{"directory":"%s","properties":["genre","runtime","description"]},"id":1}' % ( (path),))
         json_folder_detail = self.sendJSON(json_query)
         file_detail = re.compile( "{(.*?)}", re.DOTALL ).findall(json_folder_detail)
@@ -440,7 +458,7 @@ class library:
                     Detail = ((filetype + ',' + title + ',' + genre + ',' + str(runtime) + ',' + description + ',' + file)).replace(',,',',')
                     DetailLST.append(Detail)
 
-        print 'pluginInfo Return'
+        print 'PseudoLibrary - pluginInfo Return'
         return DetailLST
     
  
@@ -482,6 +500,8 @@ class library:
                 labels = re.search('"label" *: *"(.*?)"', f)
                 files = re.search('"file" *: *"(.*?)"', f)
 
+                # self.updateDialogProgressCount = self.updateDialogProgressCount + self.filecount + self.dircount
+                
                 #if core variables have info proceed
                 if filetypes and labels and files:
                     filetype = filetypes.group(1)
@@ -492,7 +512,7 @@ class library:
                     if label.lower() not in excludeLST and label != '':
 
                         if filetype == 'directory':
-                            print 'PluginWalk, directory'
+                            print 'PseudoLibrary - PluginWalk, directory'
 
                             #try to speed up parsing by not over searching directories when media limit is low
                             if self.filecount < limit and self.dircount < dirlimit:
@@ -500,7 +520,7 @@ class library:
                                 if file[0:4] != 'upnp':
                                     #if no return, try unquote
                                     if not self.PluginInfo(file):
-                                        print 'unquote'
+                                        print 'PseudoLibrary - unquote'
                                         file = unquote(file).replace('",return)','')
                                         #remove unwanted reference to super.favorites plugin
                                         try:
@@ -519,7 +539,7 @@ class library:
                                 break
 
                         elif filetype == 'file':
-                            print 'PluginWalk, file'
+                            print 'PseudoLibrary - PluginWalk, file'
 
                             if self.filecount < limit:
 
@@ -533,7 +553,7 @@ class library:
                                         pass
 
                                 if file.startswith('plugin%3A%2F%2F'):
-                                    print 'unquote'
+                                    print 'PseudoLibrary - unquote'
                                     file = unquote(file).replace('",return)','')
 
                                 # If music duration returned, else 0
@@ -555,11 +575,11 @@ class library:
                                 if dur == 18000:
                                     dur = 3600
 
-                                print 'PluginWalk, dur = ' + str(dur)
+                                print 'PseudoLibrary - PluginWalk, dur = ' + str(dur)
 
                                 if dur > 0:
                                     self.filecount += 1
-                                    self.updateDialogProgress = self.updateDialogProgress + (self.filecount * 1) // 100
+                                    # self.updateDialogProgress = i * 1 // self.updateDialogProgressCount
                                     print "PluginWalk, filecount = " + str(self.filecount) +'/'+ str(limit)
 
                                     tmpstr = str(dur) + ','
@@ -709,10 +729,10 @@ class library:
                                         showtitle = self.CleanLabels(showtitle)
                                         
                                         # if PlugCHK in DYNAMIC_PLUGIN_TV:
-                                            # print 'DYNAMIC_PLUGIN_TV'
+                                            # print 'PseudoLibrary - DYNAMIC_PLUGIN_TV'
 
                                             # if REAL_SETTINGS.getSetting('EnhancedGuideData') == 'true':
-                                                # print 'EnhancedGuideData'
+                                                # print 'PseudoLibrary - EnhancedGuideData'
 
                                                 # if imdbnumber == 0:
                                                     # imdbnumber = self.getTVDBID(showtitle, year)
@@ -758,10 +778,10 @@ class library:
                                                 tmpstr += ''
 
                                             # if PlugCHK in DYNAMIC_PLUGIN_MOVIE:
-                                                # print 'DYNAMIC_PLUGIN_MOVIE'
+                                                # print 'PseudoLibrary - DYNAMIC_PLUGIN_MOVIE'
 
                                                 # if REAL_SETTINGS.getSetting('EnhancedGuideData') == 'true':
-                                                    # print 'EnhancedGuideData'
+                                                    # print 'PseudoLibrary - EnhancedGuideData'
 
                                                     # try:
                                                         # showtitle = label.split(' (')[0]
@@ -816,22 +836,24 @@ class library:
                                     tmpstr = tmpstr + '\n' + file.replace("\\\\", "\\")
                                     self.WriteSTRM(tmpstr, StrmType, BuildType, PluginName, DirName, LastName)  
                             else:
-                                print 'PluginWalk, filecount break'
+                                print 'PseudoLibrary - PluginWalk, filecount break'
                                 self.filecount = 0
                                 break
                                 
             for item in dirs:
-                print 'PluginWalk, recursive directory walk'
+                print 'PseudoLibrary - PluginWalk, recursive directory walk'
 
                 if self.filecount >= limit:
-                    print 'PluginWalk, recursive filecount break'
+                    print 'PseudoLibrary - PluginWalk, recursive filecount break'
                     break
 
                 #recursively scan all subfolders
                 self.PluginWalk(item, excludeLST, limit, StrmType, BuildType, FleType, DirName, LastName)
-
         except:
             pass
+            
+        return
+        
 
     def log(msg, level =xbmc.LOGDEBUG):
         try:
@@ -917,13 +939,7 @@ class library:
         self.webUsername = ''
         self.webPassword = ''
         fle = xbmc.translatePath("special://profile/guisettings.xml")
-
-        try:
-            xml = FileAccess.open(fle, "r")
-        except Exception,e:
-            print ("determineWebServer Unable to open the settings file")
-            self.httpJSON = False
-            return
+        self.httpJSON = False
 
         try:
             dom = parse(xml)
@@ -1013,7 +1029,7 @@ class library:
         else:
             addon = plugin
             
-        print 'addon', addon        
+        print 'PseudoLibrary - addon', addon        
         
         json_query = ('{"jsonrpc": "2.0", "method": "Addons.GetAddons", "params": {}, "id": 1}')
         json_folder_detail = self.sendJSON(json_query)
@@ -1077,7 +1093,7 @@ class library:
                     break
             except:
                 pass
-        print 'playon_player = ' + str(PlayonPath)
+        print 'PseudoLibrary - playon_player = ' + str(PlayonPath)
         return PlayonPath
 
         
@@ -1173,7 +1189,7 @@ class library:
 
 
     def getTVDBID(self, title, year):
-        print 'getTVDBID'
+        print 'PseudoLibrary - getTVDBID'
         tvdbid = 0
         imdbid = 0
  
@@ -1208,7 +1224,7 @@ class library:
 
 
     def getIMDBIDtv(self, title):
-        print 'getIMDBIDtv'
+        print 'PseudoLibrary - getIMDBIDtv'
         imdbid = 0
 
         try:
@@ -1234,7 +1250,7 @@ class library:
 
 
     def getTVDBIDbyIMDB(self, imdbid):
-        print 'getTVDBIDbyIMDB'
+        print 'PseudoLibrary - getTVDBIDbyIMDB'
         tvdbid = 0
 
         try:
@@ -1249,7 +1265,7 @@ class library:
 
 
     def getIMDBIDmovie(self, showtitle, year):
-        print 'getIMDBIDmovie'
+        print 'PseudoLibrary - getIMDBIDmovie'
         imdbid = 0
         try:
             print ("metahander")
@@ -1275,7 +1291,7 @@ class library:
         
     
     def getTVDBIDbyZap2it(self, dd_progid):
-        print 'getTVDBIDbyZap2it'
+        print 'PseudoLibrary - getTVDBIDbyZap2it'
         tvdbid = 0
         
         try:
@@ -1292,7 +1308,7 @@ class library:
         
         
     def getTVINFObySubtitle(self, title, subtitle):
-        print 'getTVINFObySubtitle'
+        print 'PseudoLibrary - getTVINFObySubtitle'
         episode = ''
         episodeName = ''
         seasonNumber = 0
@@ -1313,7 +1329,7 @@ class library:
 
         
     def getTVINFObySE(self, title, seasonNumber, episodeNumber):
-        print 'getTVINFObySE'
+        print 'PseudoLibrary - getTVINFObySE'
         episode = ''
         episodeName = ''
         episodeDesc = ''
@@ -1341,7 +1357,7 @@ class library:
         
         
     def getMovieINFObyTitle(self, title, year):
-        print 'getMovieINFObyTitle'
+        print 'PseudoLibrary - getMovieINFObyTitle'
         imdbid = 0
         plot = ''
         tagline = ''
@@ -1426,7 +1442,7 @@ class library:
                 startIndex = startIndex + 25
                     
                 for i in range(len(feed['entries'])):
-                    self.updateDialogProgress = self.updateDialogProgress + (i * 1) // 100
+                    # self.updateDialogProgress = i * 1 // self.updateDialogProgressCount
                     try:
                         showtitle = feed.channel.author_detail['name']
                         showtitle = showtitle.replace(":", "").replace('YouTube', setting1)
@@ -1555,13 +1571,13 @@ class library:
 
             
     def CleanLabels(self, label):
-        print 'CleanLabels'
+        print 'PseudoLibrary - CleanLabels'
         label = label.replace('[B]','').replace('[/B]','').replace('[/COLOR]','').replace('[COLOR=blue]','').replace('[COLOR=cyan]','').replace('[COLOR=red]','').replace('[COLOR=green]','').replace('[COLOR=yellow]','').replace(' [HD]', '').replace('(Sub) ','').replace('(Dub) ','').replace(' [cc]','').replace('\\',' ')
         return label
         
     
     def WriteSTRM(self, tmpstr, StrmType, BuildType, PluginName, DirName, LastName):
-        print 'WriteSTRM'
+        print 'PseudoLibrary - WriteSTRM'
         WriteNFO = False
         STRM_LOC = REAL_SETTINGS.getSetting('STRM_LOC')
         WriteNFO = REAL_SETTINGS.getSetting("Write_NFOS") == "true"
@@ -1576,6 +1592,8 @@ class library:
         genre = tmpstr[3]
         GenreLiveID = tmpstr[5]
         liveID = self.unpackLiveID(GenreLiveID)
+        DirName = re.sub('[\/:*?<>|!@#$/:]', '', DirName)
+        LastName = re.sub('[\/:*?<>|!@#$/:]', '', LastName)
         # print dur, title, eptitle, description, genre, GenreLiveID, liveID
 
         if StrmType.lower() == 'tvshow' or StrmType.lower() == 'tvshows' or StrmType.lower() == 'tv':
@@ -1659,8 +1677,8 @@ class library:
                 else:
                     FleFolder = os.path.join(Folder,PluginName,DirName)
                             
-        Fle = os.path.join(FleFolder,FleName)
-        # print StrmType, FleName, Folder, FleFolder, Fle
+        Fle = (os.path.join(FleFolder,FleName))
+        print 'PseudoLibrary - WriteSTRM - ' + Fle
 
         try:
             id = liveID[1]
@@ -1677,11 +1695,16 @@ class library:
             except:
                 pass
         try:
-            f = open(Fle, "w")
+            f = FileAccess.open(Fle, "w")
             f.write("%s\n" % file)
             f.close
         except:
             pass
 
+        #todo
         #WriteNFO
+        #trigger xbmc library scan
+        #auto add folders as xbmc source
+        #source list switch for donors
+        
             
